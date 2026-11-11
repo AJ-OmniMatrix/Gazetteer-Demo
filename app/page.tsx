@@ -1,19 +1,40 @@
-import { Button } from "@/components/ui/button"
+import { randomInt } from "node:crypto"
+import { ViewTransition } from "react"
+import { DbSetupNotice } from "@/components/DbSetupNotice"
+import { GazetteerShell } from "@/components/GazetteerShell"
+import { LotdView } from "@/components/LotdView"
+import { getCatalogData } from "@/db/queries"
 
-export default function Page() {
+export const dynamic = "force-dynamic"
+
+export default async function HomePage() {
+  let data
+  try {
+    data = await getCatalogData()
+  } catch (error) {
+    return (
+      <DbSetupNotice
+        message={error instanceof Error ? error.message : "Database error"}
+      />
+    )
+  }
+
+  const layoutSeed = randomInt(2)
+  const todayLabel = new Date().toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
+    <ViewTransition>
+      <GazetteerShell initialData={data}>
+        <LotdView
+          initialData={data}
+          layoutSeed={layoutSeed}
+          todayLabel={todayLabel}
+        />
+      </GazetteerShell>
+    </ViewTransition>
   )
 }

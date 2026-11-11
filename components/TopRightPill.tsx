@@ -1,0 +1,160 @@
+"use client"
+
+import Link from "next/link"
+import {
+  RiCompass3Line,
+  RiListCheck2,
+  RiQuestionLine,
+  RiSearchLine,
+  RiUserLine,
+} from "@remixicon/react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Kbd, KbdGroup } from "@/components/ui/kbd"
+import type { DemoUser } from "@/lib/types"
+
+interface TopRightPillProps {
+  user: DemoUser
+  visitedCount: number
+  helpOpen: boolean
+  onHelpOpenChange: (open: boolean) => void
+  onOpenCommand: () => void
+}
+
+export function TopRightPill({
+  user,
+  visitedCount,
+  helpOpen,
+  onHelpOpenChange,
+  onOpenCommand,
+}: TopRightPillProps) {
+  const initials = user.displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+
+  return (
+    <>
+      <div className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10 rounded-full p-0"
+                aria-label="Open traveler profile"
+              />
+            }
+          >
+            <Avatar className="size-8">
+              <AvatarImage src={user.avatarUrl} alt={user.displayName} />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground">
+                  {user.displayName}
+                </span>
+                <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                  @{user.handle} · {visitedCount} visited
+                </span>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem render={<Link href="/list" />}>
+              <RiListCheck2 />
+              <span>Your List</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/explore" />}>
+              <RiCompass3Line />
+              <span>Explore Cities</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onOpenCommand}>
+              <RiSearchLine />
+              <span>Command Palette</span>
+              <DropdownMenuShortcut>Ctrl K</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>
+              <RiUserLine />
+              <span>Demo Account</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 rounded-full"
+          aria-label="Help and keyboard shortcuts"
+          onClick={() => onHelpOpenChange(true)}
+        >
+          <RiQuestionLine className="size-5" />
+        </Button>
+      </div>
+
+      <Dialog open={helpOpen} onOpenChange={onHelpOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-2xl">
+              Using Gazetteer
+            </DialogTitle>
+            <DialogDescription className="text-balance">
+              Track places you visit across cities and discover a featured
+              destination every day.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start justify-between gap-4 rounded-2xl border bg-muted/40 p-3">
+              <div>
+                <p className="font-medium">Location of the Day</p>
+                <p className="text-muted-foreground">
+                  Open maps or tap + to add today&apos;s featured spot directly.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start justify-between gap-4 rounded-2xl border bg-muted/40 p-3">
+              <div>
+                <p className="font-medium">Quick Check-In Dock</p>
+                <p className="text-muted-foreground">
+                  Tap the bottom + button to log via GPS coordinates or name
+                  search.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl border bg-muted/40 p-3">
+              <span className="font-medium">Command Menu</span>
+              <KbdGroup>
+                <Kbd>Ctrl</Kbd>
+                <Kbd>K</Kbd>
+              </KbdGroup>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
