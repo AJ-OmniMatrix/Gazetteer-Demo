@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Next.js / Build
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment & Secrets
+.env*
+!.env.example
+
+# Testing & Logs
+coverage/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+
+# Local docs & agent tooling (never push)
+.agents/
+.agent/
+.docs/
