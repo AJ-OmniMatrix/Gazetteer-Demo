@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { MotionConfig } from "motion/react"
 import { Toaster } from "@/components/ui/sonner"
 import { CommandMenu } from "@/components/CommandMenu"
 import { FloatingDock } from "@/components/FloatingDock"
@@ -22,7 +23,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
   const [helpOpen, setHelpOpen] = useState(false)
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <TopRightPill
         user={catalog.user}
         mode={catalog.mode}
@@ -58,7 +59,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
       />
 
       <Toaster position="top-center" />
-    </>
+    </MotionConfig>
   )
 }
 
@@ -80,4 +81,3 @@ export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
     </QueryClientProvider>
   )
 }
-

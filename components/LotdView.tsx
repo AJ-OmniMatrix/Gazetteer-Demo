@@ -6,11 +6,19 @@ import {
   RiExternalLinkLine,
   RiMapPin2Line,
 } from "@remixicon/react"
+import { AnimatePresence, motion } from "motion/react"
 import BlurText from "@/components/BlurText"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCatalog } from "@/hooks/use-catalog"
+import {
+  DURATION_ENTER,
+  DURATION_EXIT,
+  EASE_IN,
+  EASE_OUT,
+  ROW_STAGGER,
+} from "@/lib/motion"
 import type { CatalogPayload, PlacePhoto } from "@/lib/types"
 
 interface LotdViewProps {
@@ -89,8 +97,15 @@ function CollageGrid({
   return (
     <div className="grid grid-cols-6 gap-2.5 sm:gap-3">
       {tiles.map((photo, index) => (
-        <div
+        <motion.div
           key={photo.id}
+          initial={{ opacity: 0, y: 8, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            duration: DURATION_ENTER,
+            ease: EASE_OUT,
+            delay: Math.min(index, 6) * ROW_STAGGER,
+          }}
           className={getTileClasses(tiles.length, layoutSeed, index)}
         >
           <BlurHashImage
@@ -102,7 +117,7 @@ function CollageGrid({
             fill
             className="rounded-3xl border border-border/60 shadow-xs"
           />
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -143,7 +158,12 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
         layoutSeed={layoutSeed}
       />
 
-      <div className="flex flex-col justify-between gap-5 rounded-4xl border border-border/80 bg-card p-5 shadow-xs sm:flex-row sm:items-center sm:p-6">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.16 }}
+        className="flex flex-col justify-between gap-5 rounded-4xl border border-border/80 bg-card p-5 shadow-xs sm:flex-row sm:items-center sm:p-6"
+      >
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{lotd.categoryLabel}</Badge>
@@ -173,26 +193,57 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
             <RiExternalLinkLine className="size-3.5 opacity-60" />
           </Button>
 
-          <Button
-            variant={visited ? "secondary" : "default"}
-            className="min-h-11 rounded-full px-5"
-            disabled={isPending}
-            onClick={handleQuickAdd}
+          <motion.div
+            animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
+            transition={{ duration: 0.24, ease: EASE_OUT }}
           >
-            {visited ? (
-              <>
-                <RiCheckLine />
-                <span>In Your List</span>
-              </>
-            ) : (
-              <>
-                <RiAddLine />
-                <span>Add to List</span>
-              </>
-            )}
-          </Button>
+            <Button
+              variant={visited ? "secondary" : "default"}
+              className="min-h-11 rounded-full px-5"
+              disabled={isPending}
+              onClick={handleQuickAdd}
+            >
+              <AnimatePresence mode="popLayout" initial={false}>
+                {visited ? (
+                  <motion.span
+                    key="visited"
+                    initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
+                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                    exit={{
+                      opacity: 0,
+                      filter: "blur(2px)",
+                      scale: 0.92,
+                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                    }}
+                    transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                    className="inline-flex items-center gap-1.5"
+                  >
+                    <RiCheckLine />
+                    <span>In Your List</span>
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="add"
+                    initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
+                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+                    exit={{
+                      opacity: 0,
+                      filter: "blur(2px)",
+                      scale: 0.92,
+                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                    }}
+                    transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                    className="inline-flex items-center gap-1.5"
+                  >
+                    <RiAddLine />
+                    <span>Add to List</span>
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   )
 }

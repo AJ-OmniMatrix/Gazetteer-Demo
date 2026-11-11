@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { AnimatePresence, MotionConfig, motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import {
   RiAddLine,
   RiCheckLine,
@@ -27,6 +27,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { GeoKDTree } from "@/lib/ads/kd-tree"
 import { PrefixTrie } from "@/lib/ads/trie"
+import {
+  DURATION_ENTER,
+  DURATION_EXIT,
+  EASE_IN,
+  EASE_IN_OUT,
+  EASE_OUT,
+  MAX_ROW_STAGGER,
+  ROW_STAGGER,
+} from "@/lib/motion"
 import type { PlaceSummary, VisitSource } from "@/lib/types"
 
 interface FloatingDockProps {
@@ -44,6 +53,67 @@ const DEMO_COORDS = [
   { label: "Jaipur", lat: 26.9124, lng: 75.7873 },
   { label: "Paris", lat: 48.8566, lng: 2.3522 },
 ]
+
+function CheckInStatusButton({
+  visited,
+  onClick,
+}: {
+  visited: boolean
+  onClick: () => void
+}) {
+  return (
+    <motion.div
+      animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
+      transition={{ duration: 0.22, ease: EASE_OUT }}
+    >
+      <Button
+        variant={visited ? "secondary" : "default"}
+        size="sm"
+        className="min-h-10 shrink-0 rounded-full px-4"
+        disabled={visited}
+        onClick={onClick}
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {visited ? (
+            <motion.span
+              key="visited"
+              initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
+              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+              exit={{
+                opacity: 0,
+                filter: "blur(2px)",
+                scale: 0.92,
+                transition: { duration: DURATION_EXIT, ease: EASE_IN },
+              }}
+              transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+              className="inline-flex items-center gap-1"
+            >
+              <RiCheckLine />
+              <span>Visited</span>
+            </motion.span>
+          ) : (
+            <motion.span
+              key="add"
+              initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
+              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+              exit={{
+                opacity: 0,
+                filter: "blur(2px)",
+                scale: 0.92,
+                transition: { duration: DURATION_EXIT, ease: EASE_IN },
+              }}
+              transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+              className="inline-flex items-center gap-1"
+            >
+              <RiAddLine />
+              <span>Add</span>
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </Button>
+    </motion.div>
+  )
+}
 
 export function FloatingDock({
   places,
@@ -158,36 +228,43 @@ export function FloatingDock({
 
   return (
     <>
-      <MotionConfig reducedMotion="user">
-        <div
-          ref={dockRef}
-          className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2"
+      <div
+        ref={dockRef}
+        className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2"
+      >
+        <motion.nav
+          layout
+          aria-label="Primary actions"
+          transition={{ layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT } }}
+          className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1.5 shadow-lg backdrop-blur-md"
         >
-          <motion.nav
-            layout
-            aria-label="Primary actions"
-            transition={{ type: "spring", stiffness: 460, damping: 32 }}
-            className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1.5 shadow-lg backdrop-blur-md"
-          >
-            <AnimatePresence mode="popLayout" initial={false}>
-              {!expanded ? (
-                <motion.div
-                  key="collapsed"
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.94 }}
-                  transition={{ duration: 0.16 }}
-                  className="flex items-center gap-1"
+          <AnimatePresence mode="popLayout" initial={false}>
+            {!expanded ? (
+              <motion.div
+                key="collapsed"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.95,
+                  transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                }}
+                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                className="flex items-center gap-1"
+              >
+                <Button
+                  variant="ghost"
+                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  render={<Link href="/list" />}
                 >
-                  <Button
-                    variant="ghost"
-                    className="h-11 rounded-full px-4 text-sm font-medium"
-                    render={<Link href="/list" />}
-                  >
-                    <RiListCheck2 />
-                    <span>List</span>
-                  </Button>
+                  <RiListCheck2 />
+                  <span>List</span>
+                </Button>
 
+                <motion.div
+                  animate={{ scaleX: [1, 1.12, 1] }}
+                  transition={{ duration: 0.22, ease: EASE_OUT }}
+                >
                   <Button
                     size="icon-lg"
                     className="size-11 rounded-full shadow-sm"
@@ -197,52 +274,61 @@ export function FloatingDock({
                   >
                     <RiAddLine className="size-5" />
                   </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="h-11 rounded-full px-4 text-sm font-medium"
-                    render={<Link href="/explore" />}
-                  >
-                    <RiCompass3Line />
-                    <span>Explore</span>
-                  </Button>
                 </motion.div>
-              ) : (
-                <motion.div
-                  key="expanded"
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.94 }}
-                  transition={{ duration: 0.16 }}
-                  className="flex items-center gap-1"
+
+                <Button
+                  variant="ghost"
+                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  render={<Link href="/explore" />}
                 >
-                  <Button
-                    variant="secondary"
-                    className="h-11 rounded-full px-4 text-sm font-medium"
-                    onClick={() => {
-                      setExpanded(false)
-                      onGpsOpenChange(true)
-                      if (!coords && !locating) {
-                        detectLocation()
-                      }
-                    }}
-                  >
-                    <RiMapPin2Line />
-                    <span>GPS</span>
-                  </Button>
+                  <RiCompass3Line />
+                  <span>Explore</span>
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="expanded"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.95,
+                  transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                }}
+                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                className="flex items-center gap-1"
+              >
+                <Button
+                  variant="secondary"
+                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  onClick={() => {
+                    setExpanded(false)
+                    onGpsOpenChange(true)
+                    if (!coords && !locating) {
+                      detectLocation()
+                    }
+                  }}
+                >
+                  <RiMapPin2Line />
+                  <span>GPS</span>
+                </Button>
 
-                  <Button
-                    variant="secondary"
-                    className="h-11 rounded-full px-4 text-sm font-medium"
-                    onClick={() => {
-                      setExpanded(false)
-                      onSearchOpenChange(true)
-                    }}
-                  >
-                    <RiSearchLine />
-                    <span>Search</span>
-                  </Button>
+                <Button
+                  variant="secondary"
+                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  onClick={() => {
+                    setExpanded(false)
+                    onSearchOpenChange(true)
+                  }}
+                >
+                  <RiSearchLine />
+                  <span>Search</span>
+                </Button>
 
+                <motion.div
+                  animate={{ scaleX: [1, 1.12, 1] }}
+                  transition={{ duration: 0.22, ease: EASE_OUT }}
+                >
                   <Button
                     variant="ghost"
                     size="icon-lg"
@@ -253,11 +339,11 @@ export function FloatingDock({
                     <RiCloseLine className="size-5" />
                   </Button>
                 </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.nav>
-        </div>
-      </MotionConfig>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.nav>
+      </div>
 
       <Drawer
         open={gpsOpen}
@@ -318,12 +404,24 @@ export function FloatingDock({
               </p>
             )}
 
-            <div className="max-h-72 space-y-2 overflow-y-auto">
-              {nearestPlaces.map(({ item, distanceKm }) => {
-                const visited = visitedSet.has(item.id)
-                return (
-                  <div
+            <div className="max-h-72 space-y-2 overflow-y-auto overscroll-y-contain">
+              <AnimatePresence initial={false}>
+                {nearestPlaces.map(({ item, distanceKm }, index) => (
+                  <motion.div
                     key={item.id}
+                    layout
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{
+                      opacity: 0,
+                      y: -4,
+                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                    }}
+                    transition={{
+                      duration: DURATION_ENTER,
+                      ease: EASE_OUT,
+                      delay: Math.min(index * ROW_STAGGER, MAX_ROW_STAGGER),
+                    }}
                     className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-3"
                   >
                     <div className="min-w-0">
@@ -339,28 +437,13 @@ export function FloatingDock({
                         </span>
                       </div>
                     </div>
-                    <Button
-                      variant={visited ? "secondary" : "default"}
-                      size="sm"
-                      className="min-h-10 shrink-0 rounded-full px-4"
-                      disabled={visited}
+                    <CheckInStatusButton
+                      visited={visitedSet.has(item.id)}
                       onClick={() => onCheckIn(item, "gps")}
-                    >
-                      {visited ? (
-                        <>
-                          <RiCheckLine />
-                          <span>Visited</span>
-                        </>
-                      ) : (
-                        <>
-                          <RiAddLine />
-                          <span>Add</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )
-              })}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         </DrawerContent>
@@ -399,17 +482,29 @@ export function FloatingDock({
               />
             </div>
 
-            <div className="max-h-72 space-y-2 overflow-y-auto">
+            <div className="max-h-72 space-y-2 overflow-y-auto overscroll-y-contain">
               {searchResults.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">
                   {searching ? "Searching..." : "No matching places found."}
                 </p>
               )}
-              {searchResults.map((place) => {
-                const visited = visitedSet.has(place.id)
-                return (
-                  <div
+              <AnimatePresence initial={false}>
+                {searchResults.map((place, index) => (
+                  <motion.div
                     key={place.id}
+                    layout
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{
+                      opacity: 0,
+                      y: -4,
+                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                    }}
+                    transition={{
+                      duration: DURATION_ENTER,
+                      ease: EASE_OUT,
+                      delay: Math.min(index * ROW_STAGGER, MAX_ROW_STAGGER),
+                    }}
                     className="flex items-center justify-between gap-3 rounded-2xl border bg-card p-3"
                   >
                     <div className="min-w-0">
@@ -423,28 +518,13 @@ export function FloatingDock({
                         </Badge>
                       </div>
                     </div>
-                    <Button
-                      variant={visited ? "secondary" : "default"}
-                      size="sm"
-                      className="min-h-10 shrink-0 rounded-full px-4"
-                      disabled={visited}
+                    <CheckInStatusButton
+                      visited={visitedSet.has(place.id)}
                       onClick={() => onCheckIn(place, "search")}
-                    >
-                      {visited ? (
-                        <>
-                          <RiCheckLine />
-                          <span>Visited</span>
-                        </>
-                      ) : (
-                        <>
-                          <RiAddLine />
-                          <span>Add</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )
-              })}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           </div>
         </DrawerContent>
@@ -452,4 +532,3 @@ export function FloatingDock({
     </>
   )
 }
-
