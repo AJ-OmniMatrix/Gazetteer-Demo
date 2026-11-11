@@ -1,17 +1,34 @@
-import { Geist, Geist_Mono, IBM_Plex_Sans, EB_Garamond } from "next/font/google"
-
-import "./globals.css"
+import type { Metadata, Viewport } from "next"
+import { EB_Garamond, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google"
+import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import "./globals.css"
 
-const ebGaramondHeading = EB_Garamond({subsets:['latin'],variable:'--font-heading'});
+const ebGaramondHeading = EB_Garamond({
+  subsets: ["latin"],
+  variable: "--font-heading",
+})
 
-const ibmPlexSans = IBM_Plex_Sans({subsets:['latin'],variable:'--font-sans'})
+const ibmPlexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+})
 
-const fontMono = Geist_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "Gazetteer — Travel Catalogue",
+  description: "Personal travel catalogue and location tracker.",
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+}
 
 export default function RootLayout({
   children,
@@ -22,9 +39,15 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", ibmPlexSans.variable, ebGaramondHeading.variable)}
+      className={cn(
+        "antialiased",
+        jetbrainsMono.variable,
+        "font-sans",
+        ibmPlexSans.variable,
+        ebGaramondHeading.variable
+      )}
     >
-      <body>
+      <body className="min-h-dvh bg-background text-foreground selection:bg-primary/15">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
