@@ -25,6 +25,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
     <>
       <TopRightPill
         user={catalog.user}
+        mode={catalog.mode}
         visitedCount={visitedSet.size}
         helpOpen={helpOpen}
         onHelpOpenChange={setHelpOpen}

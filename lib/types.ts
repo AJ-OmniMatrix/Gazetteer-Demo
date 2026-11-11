@@ -42,6 +42,7 @@ export interface LocationOfTheDay extends PlaceSummary {
 }
 
 export interface CatalogPayload {
+  mode: "tidb" | "memory"
   user: DemoUser
   lotd: LocationOfTheDay
   places: PlaceSummary[]

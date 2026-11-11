@@ -32,6 +32,7 @@ import type { DemoUser } from "@/lib/types"
 
 interface TopRightPillProps {
   user: DemoUser
+  mode: "tidb" | "memory"
   visitedCount: number
   helpOpen: boolean
   onHelpOpenChange: (open: boolean) => void
@@ -40,6 +41,7 @@ interface TopRightPillProps {
 
 export function TopRightPill({
   user,
+  mode,
   visitedCount,
   helpOpen,
   onHelpOpenChange,
@@ -99,7 +101,7 @@ export function TopRightPill({
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>
               <RiUserLine />
-              <span>Demo Account</span>
+              <span>{mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

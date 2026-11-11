@@ -1,5 +1,11 @@
 import type { RowDataPacket } from "mysql2"
 import { getPool, withTransaction } from "./index"
+import {
+  checkInMemory,
+  getMemoryCatalogData,
+  searchMemoryPlaces,
+  undoCheckInMemory,
+} from "./memory"
 import type {
   CatalogPayload,
   DemoUser,
@@ -10,6 +16,10 @@ import type {
 } from "@/lib/types"
 
 export const DEMO_USER_ID = 1
+
+function hasDatabase(): boolean {
+  return Boolean(process.env.DATABASE_URL?.trim())
+}
 
 function mapPlace(row: RowDataPacket): PlaceSummary {
   return {
@@ -33,6 +43,9 @@ function mapPlace(row: RowDataPacket): PlaceSummary {
 }
 
 export async function getCatalogData(): Promise<CatalogPayload> {
+  if (!hasDatabase()) {
+    return getMemoryCatalogData()
+  }
   const pool = getPool()
 
   const [userRows] = await pool.execute<RowDataPacket[]>(
@@ -97,13 +110,16 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     visited: visitedIds.includes(lotdPlace.id),
   }
 
-  return { user, lotd, places, visitedIds }
+  return { mode: "tidb", user, lotd, places, visitedIds }
 }
 
 export async function searchPlacesSql(
   query: string,
   limit = 8
 ): Promise<PlaceSummary[]> {
+  if (!hasDatabase()) {
+    return searchMemoryPlaces(query, limit)
+  }
   const clean = query.trim()
   if (!clean) {
     return []
@@ -139,6 +155,9 @@ export async function checkInPlace(
   source: VisitSource,
   idempotencyKey: string
 ): Promise<{ alreadyVisited: boolean }> {
+  if (!hasDatabase()) {
+    return checkInMemory(placeId, idempotencyKey)
+  }
   return withTransaction(async (conn) => {
     const [byKey] = await conn.execute<RowDataPacket[]>(
       `SELECT id FROM visits WHERE user_id = ? AND idempotency_key = ? LIMIT 1`,
@@ -166,6 +185,10 @@ export async function checkInPlace(
 }
 
 export async function undoCheckIn(placeId: number): Promise<void> {
+  if (!hasDatabase()) {
+    undoCheckInMemory(placeId)
+    return
+  }
   await withTransaction(async (conn) => {
     await conn.execute(
       `DELETE FROM visits WHERE user_id = ? AND place_id = ?`,
