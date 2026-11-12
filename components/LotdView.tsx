@@ -1,8 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState, type PointerEvent } from "react"
+import Link from "next/link"
 import gsap from "gsap"
-import { RiExternalLinkLine, RiMapPin2Line } from "@remixicon/react"
+import {
+  RiCompass3Line,
+  RiExternalLinkLine,
+  RiMapPin2Line,
+} from "@remixicon/react"
 import { motion } from "motion/react"
 import BlurText from "@/components/BlurText"
 import { BlurHashImage } from "@/components/BlurHashImage"
@@ -305,6 +310,38 @@ function CollageGrid({
 export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
   const { catalog, visitedSet, checkIn, undoCheckIn, isPending } = useCatalog()
   const { lotd } = catalog
+
+  if (!lotd) {
+    return (
+      <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
+        <Badge
+          variant="secondary"
+          className="px-3 py-1 font-mono text-xs tracking-wider uppercase"
+        >
+          Gazetteer Travel Catalogue
+        </Badge>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-5xl">
+          Welcome to Gazetteer
+        </h1>
+        <p className="max-w-md text-sm text-muted-foreground sm:text-base">
+          No locations added yet. Start your travel catalogue by adding your
+          first location and photos.
+        </p>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+          <Button
+            variant="default"
+            className="h-11 rounded-full px-5"
+            nativeButton={false}
+            render={<Link href="/explore" />}
+          >
+            <RiCompass3Line />
+            <span>Explore Cities</span>
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
   const visited = visitedSet.has(lotd.id)
 
   const handleQuickAdd = () => {

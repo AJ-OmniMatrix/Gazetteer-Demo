@@ -8,6 +8,7 @@ import {
 import type {
   CatalogPayload,
   LocationOfTheDay,
+  PlacePhoto,
   PlaceSummary,
 } from "@/lib/types"
 
@@ -39,8 +40,27 @@ const categoryBySlug = new Map(
 )
 
 const MEMORY_PLACES: PlaceSummary[] = SEED_PLACES.map((p, idx) => {
-  const city = cityByName.get(p.city)!
-  const category = categoryBySlug.get(p.category)!
+  const city = cityByName.get(p.city) ?? {
+    id: idx + 1,
+    name: p.city,
+    countryCode: p.countryCode ?? "XX",
+    lat: p.lat,
+    lng: p.lng,
+  }
+  const category = categoryBySlug.get(p.category) ?? {
+    id: 1,
+    slug: p.category,
+    label: p.category,
+    iconName: "RiCompass3Line",
+  }
+  const photos: PlacePhoto[] = p.photos.map((photo, pIdx) => ({
+    id: pIdx + 1,
+    imageUrl: photo.imageUrl,
+    blurhash: photo.blurhash,
+    width: photo.width,
+    height: photo.height,
+    sortOrder: photo.sortOrder,
+  }))
   return {
     id: idx + 1,
     slug: p.slug,
@@ -53,31 +73,47 @@ const MEMORY_PLACES: PlaceSummary[] = SEED_PLACES.map((p, idx) => {
     cityId: city.id,
     cityName: city.name,
     countryCode: city.countryCode,
-    countryName: countryByCode.get(city.countryCode) ?? city.countryCode,
+    countryName:
+      countryByCode.get(city.countryCode) ?? p.country ?? city.countryCode,
     categoryId: category.id,
     categorySlug: category.slug,
     categoryLabel: category.label,
     categoryIcon: category.iconName,
+    primaryPhoto: photos[0],
+    photos,
   }
 })
 
 export function getMemoryCatalogData(): CatalogPayload {
   const visitedSet = getVisitsSet()
+  if (MEMORY_PLACES.length === 0) {
+    return {
+      mode: "memory",
+      user: SEED_USER,
+      lotd: null,
+      places: [],
+      visitedIds: [],
+    }
+  }
+
   const lotdIndex = SEED_PLACES.findIndex((p) => p.featuredOffsetDays === 0)
   const idx = lotdIndex >= 0 ? lotdIndex : 0
   const seedLotd = SEED_PLACES[idx]
   const lotdSummary = MEMORY_PLACES[idx]
 
+  const lotdPhotos: PlacePhoto[] = seedLotd.photos.map((photo, pIdx) => ({
+    id: pIdx + 1,
+    imageUrl: photo.imageUrl,
+    blurhash: photo.blurhash,
+    width: photo.width,
+    height: photo.height,
+    sortOrder: photo.sortOrder,
+  }))
+
   const lotd: LocationOfTheDay = {
     ...lotdSummary,
-    photos: seedLotd.photos.map((photo, pIdx) => ({
-      id: pIdx + 1,
-      imageUrl: photo.imageUrl,
-      blurhash: photo.blurhash,
-      width: photo.width,
-      height: photo.height,
-      sortOrder: photo.sortOrder,
-    })),
+    primaryPhoto: lotdPhotos[0],
+    photos: lotdPhotos,
     visited: visitedSet.has(lotdSummary.id),
   }
 
@@ -120,4 +156,3 @@ export function checkInMemory(
 export function undoCheckInMemory(placeId: number): void {
   getVisitsSet().delete(placeId)
 }
-

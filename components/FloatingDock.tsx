@@ -48,12 +48,6 @@ interface FloatingDockProps {
   onCheckIn: (place: PlaceSummary, source: VisitSource) => void
 }
 
-const DEMO_COORDS = [
-  { label: "Kyoto", lat: 35.0116, lng: 135.7681 },
-  { label: "Jaipur", lat: 26.9124, lng: 75.7873 },
-  { label: "Paris", lat: 48.8566, lng: 2.3522 },
-]
-
 export function FloatingDock({
   places,
   visitedSet,
@@ -66,6 +60,16 @@ export function FloatingDock({
   const [expanded, setExpanded] = useState(false)
   const [hasToggled, setHasToggled] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
+
+  const cityPresets = useMemo(() => {
+    const map = new Map<string, { label: string; lat: number; lng: number }>()
+    for (const p of places) {
+      if (!map.has(p.cityName)) {
+        map.set(p.cityName, { label: p.cityName, lat: p.lat, lng: p.lng })
+      }
+    }
+    return Array.from(map.values()).slice(0, 4)
+  }, [places])
 
   const toggleExpanded = (next: boolean) => {
     setHasToggled(true)
@@ -332,7 +336,7 @@ export function FloatingDock({
                 )}
                 <span>{locating ? "Locating..." : "Use My GPS"}</span>
               </Button>
-              {DEMO_COORDS.map((preset) => (
+              {cityPresets.map((preset) => (
                 <Button
                   key={preset.label}
                   variant="ghost"
@@ -361,6 +365,13 @@ export function FloatingDock({
             )}
 
             <div className="max-h-72 space-y-2 overflow-y-auto overscroll-y-contain">
+              {nearestPlaces.length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  {coords
+                    ? "No catalogued locations nearby."
+                    : "Detect location or pick a city to find nearby spots."}
+                </p>
+              )}
               <AnimatePresence initial={false}>
                 {nearestPlaces.map(({ item, distanceKm }, index) => (
                   <motion.div

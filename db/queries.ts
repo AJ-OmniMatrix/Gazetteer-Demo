@@ -48,26 +48,32 @@ export async function getCatalogData(): Promise<CatalogPayload> {
   }
   const pool = getPool()
 
-  const [[userRows], [placeRows], [lotdRows], [visitRows]] = await Promise.all([
-    pool.execute<RowDataPacket[]>(
-      `SELECT id, display_name, handle, avatar_url, avatar_blurhash
+  const [[userRows], [placeRows], [photoRows], [lotdRows], [visitRows]] =
+    await Promise.all([
+      pool.execute<RowDataPacket[]>(
+        `SELECT id, display_name, handle, avatar_url, avatar_blurhash
        FROM users WHERE id = ? LIMIT 1`,
-      [DEMO_USER_ID]
-    ),
-    pool.query<RowDataPacket[]>(
-      `SELECT * FROM v_place_details ORDER BY name ASC`
-    ),
-    pool.query<RowDataPacket[]>(
-      `SELECT * FROM v_place_details
+        [DEMO_USER_ID]
+      ),
+      pool.query<RowDataPacket[]>(
+        `SELECT * FROM v_place_details ORDER BY name ASC`
+      ),
+      pool.query<RowDataPacket[]>(
+        `SELECT id, place_id, image_url, blurhash, width, height, sort_order
+       FROM place_photos
+       ORDER BY place_id ASC, sort_order ASC, id ASC`
+      ),
+      pool.query<RowDataPacket[]>(
+        `SELECT * FROM v_place_details
        WHERE featured_date IS NOT NULL AND featured_date <= CURDATE()
        ORDER BY featured_date DESC, id ASC
        LIMIT 1`
-    ),
-    pool.execute<RowDataPacket[]>(
-      `SELECT place_id FROM visits WHERE user_id = ?`,
-      [DEMO_USER_ID]
-    ),
-  ])
+      ),
+      pool.execute<RowDataPacket[]>(
+        `SELECT place_id FROM visits WHERE user_id = ?`,
+        [DEMO_USER_ID]
+      ),
+    ])
 
   if (userRows.length === 0) {
     throw new Error("Demo user missing. Run npm run db:setup first.")
@@ -81,35 +87,43 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     avatarBlurhash: String(u.avatar_blurhash),
   }
 
-  const places = placeRows.map(mapPlace)
-  const lotdRow = lotdRows[0] ?? placeRows[0]
-  if (!lotdRow) {
-    throw new Error("No places seeded. Run npm run db:setup first.")
+  const photosByPlaceId = new Map<number, PlacePhoto[]>()
+  for (const p of photoRows) {
+    const placeId = Number(p.place_id)
+    const list = photosByPlaceId.get(placeId) ?? []
+    list.push({
+      id: Number(p.id),
+      imageUrl: String(p.image_url),
+      blurhash: String(p.blurhash),
+      width: Number(p.width),
+      height: Number(p.height),
+      sortOrder: Number(p.sort_order),
+    })
+    photosByPlaceId.set(placeId, list)
   }
 
-  const lotdPlace = mapPlace(lotdRow)
-  const [photoRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, image_url, blurhash, width, height, sort_order
-     FROM place_photos
-     WHERE place_id = ?
-     ORDER BY sort_order ASC, id ASC`,
-    [lotdPlace.id]
-  )
-  const photos: PlacePhoto[] = photoRows.map((p) => ({
-    id: Number(p.id),
-    imageUrl: String(p.image_url),
-    blurhash: String(p.blurhash),
-    width: Number(p.width),
-    height: Number(p.height),
-    sortOrder: Number(p.sort_order),
-  }))
+  const places: PlaceSummary[] = placeRows.map((row) => {
+    const summary = mapPlace(row)
+    const photos = photosByPlaceId.get(summary.id) ?? []
+    return {
+      ...summary,
+      primaryPhoto: photos[0],
+      photos,
+    }
+  })
 
   const visitedIds = visitRows.map((v) => Number(v.place_id))
-
-  const lotd: LocationOfTheDay = {
-    ...lotdPlace,
-    photos,
-    visited: visitedIds.includes(lotdPlace.id),
+  const lotdRow = lotdRows[0] ?? placeRows[0]
+  let lotd: LocationOfTheDay | null = null
+  if (lotdRow) {
+    const lotdPlace = mapPlace(lotdRow)
+    const photos = photosByPlaceId.get(lotdPlace.id) ?? []
+    lotd = {
+      ...lotdPlace,
+      primaryPhoto: photos[0],
+      photos,
+      visited: visitedIds.includes(lotdPlace.id),
+    }
   }
 
   return { mode: "tidb", user, lotd, places, visitedIds }

@@ -48,7 +48,7 @@ export function useCatalog(initialData?: CatalogPayload) {
           ...old,
           visitedIds: old.visitedIds.filter((id) => id !== place.id),
           lotd:
-            old.lotd.id === place.id
+            old.lotd && old.lotd.id === place.id
               ? { ...old.lotd, visited: false }
               : old.lotd,
         }
@@ -97,7 +97,7 @@ export function useCatalog(initialData?: CatalogPayload) {
           ...old,
           visitedIds: nextIds,
           lotd:
-            old.lotd.id === place.id
+            old.lotd && old.lotd.id === place.id
               ? { ...old.lotd, visited: true }
               : old.lotd,
         }

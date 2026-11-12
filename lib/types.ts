@@ -34,6 +34,8 @@ export interface PlaceSummary {
   categorySlug: string
   categoryLabel: string
   categoryIcon: string
+  primaryPhoto?: PlacePhoto
+  photos?: PlacePhoto[]
 }
 
 export interface LocationOfTheDay extends PlaceSummary {
@@ -44,8 +46,7 @@ export interface LocationOfTheDay extends PlaceSummary {
 export interface CatalogPayload {
   mode: "tidb" | "memory"
   user: DemoUser
-  lotd: LocationOfTheDay
+  lotd: LocationOfTheDay | null
   places: PlaceSummary[]
   visitedIds: number[]
 }
-
