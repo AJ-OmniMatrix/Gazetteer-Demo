@@ -20,6 +20,7 @@ import {
   ROW_STAGGER,
 } from "@/lib/motion"
 import type { CatalogPayload, PlacePhoto } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 interface LotdViewProps {
   initialData: CatalogPayload
@@ -27,61 +28,89 @@ interface LotdViewProps {
   todayLabel: string
 }
 
+const TILE_LAYOUTS: Record<number, [string[], string[]]> = {
+  1: [["col-span-12 row-span-2"], ["col-span-12 row-span-2"]],
+  2: [
+    ["col-span-7 row-span-2", "col-span-5 row-span-2"],
+    ["col-span-5 row-span-2", "col-span-7 row-span-2"],
+  ],
+  3: [
+    ["col-span-7 row-span-2", "col-span-5", "col-span-5"],
+    ["col-span-5", "col-span-7 row-span-2", "col-span-5"],
+  ],
+  4: [
+    [
+      "col-span-5 row-span-2",
+      "col-span-4",
+      "col-span-3 row-span-2",
+      "col-span-4",
+    ],
+    [
+      "col-span-3 row-span-2",
+      "col-span-4",
+      "col-span-5 row-span-2",
+      "col-span-4",
+    ],
+  ],
+  5: [
+    [
+      "col-span-5 row-span-2",
+      "col-span-4",
+      "col-span-3",
+      "col-span-3",
+      "col-span-4",
+    ],
+    [
+      "col-span-3",
+      "col-span-6 row-span-2",
+      "col-span-3",
+      "col-span-3",
+      "col-span-3",
+    ],
+  ],
+  6: [
+    [
+      "col-span-4 row-span-2",
+      "col-span-5",
+      "col-span-3",
+      "col-span-2",
+      "col-span-3",
+      "col-span-3",
+    ],
+    [
+      "col-span-4 row-span-2",
+      "col-span-3",
+      "col-span-2",
+      "col-span-3 row-span-2",
+      "col-span-2",
+      "col-span-3",
+    ],
+  ],
+  7: [
+    [
+      "col-span-4 row-span-2",
+      "col-span-3",
+      "col-span-2",
+      "col-span-3",
+      "col-span-2",
+      "col-span-3",
+      "col-span-3",
+    ],
+    [
+      "col-span-2",
+      "col-span-3",
+      "col-span-4 row-span-2",
+      "col-span-3",
+      "col-span-3",
+      "col-span-2",
+      "col-span-3",
+    ],
+  ],
+}
+
 function getTileClasses(count: number, variant: number, index: number): string {
-  const v = variant % 2
-
-  if (count <= 4) {
-    if (v === 0) {
-      if (index === 0) return "col-span-6 sm:col-span-4 sm:row-span-2 min-h-56"
-      if (index === 1) return "col-span-3 sm:col-span-2 min-h-36"
-      if (index === 2) return "col-span-3 sm:col-span-2 min-h-36"
-      return "col-span-6 min-h-40"
-    }
-    if (index === 0) return "col-span-6 sm:col-span-3 min-h-52"
-    if (index === 1) return "col-span-6 sm:col-span-3 min-h-52"
-    if (index === 2) return "col-span-3 sm:col-span-2 min-h-40"
-    return "col-span-3 sm:col-span-4 min-h-40"
-  }
-
-  if (count === 5) {
-    if (v === 0) {
-      if (index === 0) return "col-span-6 sm:col-span-3 sm:row-span-2 min-h-56"
-      if (index === 1) return "col-span-3 sm:col-span-3 min-h-36"
-      if (index === 2) return "col-span-3 sm:col-span-3 min-h-36"
-      if (index === 3) return "col-span-3 sm:col-span-2 min-h-40"
-      return "col-span-3 sm:col-span-4 min-h-40"
-    }
-    if (index < 3) return "col-span-2 min-h-44"
-    if (index === 3) return "col-span-4 min-h-48"
-    return "col-span-2 min-h-48"
-  }
-
-  if (count === 6) {
-    if (v === 0) {
-      if (index === 0) return "col-span-6 sm:col-span-4 sm:row-span-2 min-h-60"
-      if (index === 1) return "col-span-3 sm:col-span-2 min-h-36"
-      if (index === 2) return "col-span-3 sm:col-span-2 min-h-36"
-      return "col-span-2 min-h-40"
-    }
-    if (index === 0) return "col-span-6 sm:col-span-2 min-h-44"
-    if (index === 1) return "col-span-6 sm:col-span-4 min-h-44"
-    if (index === 2) return "col-span-3 min-h-44"
-    if (index === 3) return "col-span-3 min-h-44"
-    if (index === 4) return "col-span-4 min-h-40"
-    return "col-span-2 min-h-40"
-  }
-
-  if (v === 0) {
-    if (index === 0) return "col-span-6 sm:col-span-4 sm:row-span-2 min-h-60"
-    if (index === 1) return "col-span-3 sm:col-span-2 min-h-36"
-    if (index === 2) return "col-span-3 sm:col-span-2 min-h-36"
-    if (index <= 5) return "col-span-2 min-h-40"
-    return "col-span-6 min-h-36"
-  }
-  if (index <= 1) return "col-span-3 min-h-48"
-  if (index <= 4) return "col-span-2 min-h-40"
-  if (index === 5) return "col-span-4 min-h-44"
-  return "col-span-2 min-h-44"
+  const clamped = Math.min(Math.max(count, 1), 7)
+  return TILE_LAYOUTS[clamped][variant % 2][index] ?? "col-span-4"
 }
 
 function CollageGrid({
@@ -94,36 +123,48 @@ function CollageGrid({
   layoutSeed: number
 }) {
   const tiles = photos.slice(0, 7)
+  if (tiles.length === 0) {
+    return null
+  }
   return (
-    <div className="grid grid-cols-6 gap-2.5 sm:gap-3">
-      {tiles.map((photo, index) => (
-        <motion.div
-          key={photo.id}
-          initial={{ opacity: 0, y: 8, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{
-            duration: DURATION_ENTER,
-            ease: EASE_OUT,
-            delay: Math.min(index, 6) * ROW_STAGGER,
-          }}
-          className={getTileClasses(tiles.length, layoutSeed, index)}
-        >
-          <BlurHashImage
-            src={photo.imageUrl}
-            alt={`${placeName} view ${index + 1}`}
-            blurhash={photo.blurhash}
-            width={photo.width}
-            height={photo.height}
-            fill
-            className="rounded-3xl border border-border/60 shadow-xs"
-          />
-        </motion.div>
-      ))}
+    <div className="flex min-h-0 flex-1 flex-col justify-center">
+      <div className="grid max-h-[min(54vw,32rem)] min-h-0 w-full flex-1 grid-cols-12 grid-rows-[repeat(2,minmax(0,1fr))] gap-2 sm:gap-3">
+        {tiles.map((photo, index) => (
+          <motion.div
+            key={photo.id}
+            initial={{ opacity: 0, x: -8, scale: 0.98 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{
+              duration: DURATION_ENTER,
+              ease: EASE_OUT,
+              delay: Math.min(index, 6) * ROW_STAGGER,
+            }}
+            className={cn(
+              "min-h-0 min-w-0",
+              getTileClasses(tiles.length, layoutSeed, index)
+            )}
+          >
+            <BlurHashImage
+              src={photo.imageUrl}
+              alt={`${placeName} view ${index + 1}`}
+              blurhash={photo.blurhash}
+              width={photo.width}
+              height={photo.height}
+              fill
+              className="rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
+            />
+          </motion.div>
+        ))}
+      </div>
     </div>
   )
 }
 
-export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps) {
+export function LotdView({
+  initialData,
+  layoutSeed,
+  todayLabel,
+}: LotdViewProps) {
   const { catalog, visitedSet, checkIn, undoCheckIn, isPending } =
     useCatalog(initialData)
   const { lotd } = catalog
@@ -138,9 +179,9 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
   }
 
   return (
-    <section className="flex flex-col gap-6 sm:gap-8">
-      <header className="flex flex-col items-center gap-2 text-center">
-        <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase tabular-nums">
+    <section className="flex min-h-0 flex-1 flex-col justify-between gap-3 sm:gap-5">
+      <header className="flex shrink-0 flex-col items-center gap-1 text-center">
+        <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase tabular-nums sm:text-xs">
           {todayLabel}
         </p>
         <BlurText
@@ -148,7 +189,7 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
           trigger="load"
           animateBy="words"
           delay={90}
-          className="font-heading justify-center text-center text-4xl font-semibold tracking-tight text-balance sm:text-5xl"
+          className="justify-center text-center font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl lg:text-[2.75rem]"
         />
       </header>
 
@@ -162,21 +203,23 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.16 }}
-        className="flex flex-col justify-between gap-5 rounded-4xl border border-border/80 bg-card p-5 shadow-xs sm:flex-row sm:items-center sm:p-6"
+        className="flex shrink-0 flex-col justify-between gap-3 rounded-4xl border border-border/80 bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:gap-5 sm:px-6 sm:py-4"
       >
-        <div className="min-w-0 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <Badge variant="secondary">{lotd.categoryLabel}</Badge>
             <span className="text-sm text-muted-foreground">
               {lotd.cityName}, {lotd.countryName}
             </span>
+            <span className="font-mono text-xs text-muted-foreground tabular-nums">
+              {lotd.lat.toFixed(4)}°, {lotd.lng.toFixed(4)}°
+            </span>
           </div>
-          <h2 className="font-heading text-2xl font-medium tracking-tight text-balance sm:text-3xl">
+          <h2 className="font-heading text-xl font-medium tracking-tight text-balance sm:text-2xl lg:text-[1.75rem]">
             {lotd.name}
           </h2>
-          <p className="text-sm text-muted-foreground">{lotd.description}</p>
-          <p className="font-mono text-xs text-muted-foreground tabular-nums">
-            {lotd.lat.toFixed(4)}°, {lotd.lng.toFixed(4)}°
+          <p className="line-clamp-2 text-xs text-muted-foreground sm:line-clamp-1 sm:text-sm">
+            {lotd.description}
           </p>
         </div>
 
@@ -185,7 +228,11 @@ export function LotdView({ initialData, layoutSeed, todayLabel }: LotdViewProps)
             variant="outline"
             className="min-h-11 rounded-full px-4"
             render={
-              <a href={lotd.mapsUrl} target="_blank" rel="noopener noreferrer" />
+              <a
+                href={lotd.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
             }
           >
             <RiMapPin2Line />
