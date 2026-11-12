@@ -56,7 +56,10 @@ export function TopRightPill({
 
   return (
     <>
-      <div className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md">
+      <div
+        style={{ viewTransitionName: "top-right-pill" }}
+        className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md"
+      >
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -101,7 +104,9 @@ export function TopRightPill({
             <DropdownMenuSeparator />
             <DropdownMenuItem disabled>
               <RiUserLine />
-              <span>{mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}</span>
+              <span>
+                {mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -159,4 +164,3 @@ export function TopRightPill({
     </>
   )
 }
-

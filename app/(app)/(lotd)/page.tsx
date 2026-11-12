@@ -1,4 +1,5 @@
 import { randomInt } from "node:crypto"
+import { ViewTransition } from "react"
 import { LotdView } from "@/components/LotdView"
 
 export const dynamic = "force-dynamic"
@@ -11,6 +12,9 @@ export default function HomePage() {
     year: "numeric",
   })
 
-  return <LotdView layoutSeed={layoutSeed} todayLabel={todayLabel} />
+  return (
+    <ViewTransition enter="page-fade" exit="page-fade" default="none">
+      <LotdView layoutSeed={layoutSeed} todayLabel={todayLabel} />
+    </ViewTransition>
+  )
 }
-

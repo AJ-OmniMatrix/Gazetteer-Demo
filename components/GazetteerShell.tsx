@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, ViewTransition, type ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
@@ -43,7 +43,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
             : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
         }
       >
-        <ViewTransition>{children}</ViewTransition>
+        {children}
       </main>
 
       <FloatingDock
