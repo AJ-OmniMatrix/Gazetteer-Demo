@@ -288,6 +288,7 @@ function CollageGrid({
                 width={photo.width}
                 height={photo.height}
                 fill
+                loading="eager"
                 mediaRef={(el) => {
                   mediaRefs.current[index] = el
                 }}

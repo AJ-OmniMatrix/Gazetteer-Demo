@@ -17,6 +17,7 @@ interface BlurHashImageProps {
   className?: string
   imgClassName?: string
   mediaRef?: Ref<HTMLDivElement>
+  loading?: "eager" | "lazy"
 }
 
 export function BlurHashImage({
@@ -29,6 +30,7 @@ export function BlurHashImage({
   className,
   imgClassName,
   mediaRef,
+  loading,
 }: BlurHashImageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const revealRef = useRef<HTMLDivElement>(null)
@@ -131,6 +133,7 @@ export function BlurHashImage({
             alt={alt}
             width={width}
             height={height}
+            loading={loading}
             unoptimized
             onLoad={() => setLoaded(true)}
             className={cn("size-full object-cover", imgClassName)}
