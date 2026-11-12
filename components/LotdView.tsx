@@ -19,11 +19,10 @@ import {
   GSAP_EASE_OUT,
   ROW_STAGGER,
 } from "@/lib/motion"
-import type { CatalogPayload, PlacePhoto } from "@/lib/types"
+import type { PlacePhoto } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 interface LotdViewProps {
-  initialData: CatalogPayload
   layoutSeed: number
   todayLabel: string
 }
@@ -302,13 +301,8 @@ function CollageGrid({
   )
 }
 
-export function LotdView({
-  initialData,
-  layoutSeed,
-  todayLabel,
-}: LotdViewProps) {
-  const { catalog, visitedSet, checkIn, undoCheckIn, isPending } =
-    useCatalog(initialData)
+export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
+  const { catalog, visitedSet, checkIn, undoCheckIn, isPending } = useCatalog()
   const { lotd } = catalog
   const visited = visitedSet.has(lotd.id)
 

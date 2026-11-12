@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useState, ViewTransition, type ReactNode } from "react"
+import { usePathname } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
 import { Toaster } from "@/components/ui/sonner"
@@ -13,14 +14,11 @@ import type { CatalogPayload } from "@/lib/types"
 interface GazetteerShellProps {
   initialData: CatalogPayload
   children: ReactNode
-  fitViewport?: boolean
 }
 
-function InnerShell({
-  initialData,
-  children,
-  fitViewport = false,
-}: GazetteerShellProps) {
+function InnerShell({ initialData, children }: GazetteerShellProps) {
+  const pathname = usePathname()
+  const fitViewport = pathname === "/"
   const { catalog, visitedSet, checkIn } = useCatalog(initialData)
   const [commandOpen, setCommandOpen] = useState(false)
   const [gpsOpen, setGpsOpen] = useState(false)
@@ -45,7 +43,7 @@ function InnerShell({
             : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
         }
       >
-        {children}
+        <ViewTransition>{children}</ViewTransition>
       </main>
 
       <FloatingDock
@@ -74,27 +72,22 @@ function InnerShell({
   )
 }
 
-export function GazetteerShell({
-  initialData,
-  children,
-  fitViewport = false,
-}: GazetteerShellProps) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-          },
+export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
+  const [queryClient] = useState(() => {
+    const client = new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 30_000,
         },
-      })
-  )
+      },
+    })
+    client.setQueryData(["catalog"], initialData)
+    return client
+  })
 
   return (
     <QueryClientProvider client={queryClient}>
-      <InnerShell initialData={initialData} fitViewport={fitViewport}>
-        {children}
-      </InnerShell>
+      <InnerShell initialData={initialData}>{children}</InnerShell>
     </QueryClientProvider>
   )
 }

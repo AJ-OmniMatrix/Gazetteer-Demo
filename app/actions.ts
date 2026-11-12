@@ -11,7 +11,7 @@ export async function checkInAction(
 ): Promise<{ ok: boolean; alreadyVisited?: boolean; error?: string }> {
   try {
     const result = await checkInPlace(placeId, source, idempotencyKey)
-    revalidatePath("/")
+    revalidatePath("/", "layout")
     return { ok: true, alreadyVisited: result.alreadyVisited }
   } catch (error) {
     return {
@@ -26,7 +26,7 @@ export async function undoCheckInAction(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     await undoCheckIn(placeId)
-    revalidatePath("/")
+    revalidatePath("/", "layout")
     return { ok: true }
   } catch (error) {
     return {
@@ -36,7 +36,8 @@ export async function undoCheckInAction(
   }
 }
 
-export async function searchPlacesAction(query: string): Promise<PlaceSummary[]> {
+export async function searchPlacesAction(
+  query: string
+): Promise<PlaceSummary[]> {
   return searchPlacesSql(query, 8)
 }
-

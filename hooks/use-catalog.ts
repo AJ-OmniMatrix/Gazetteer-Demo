@@ -14,21 +14,21 @@ async function fetchCatalog(): Promise<CatalogPayload> {
   return res.json()
 }
 
-export function useCatalog(initialData: CatalogPayload) {
+export function useCatalog(initialData?: CatalogPayload) {
   const queryClient = useQueryClient()
+  const seedData =
+    initialData ?? queryClient.getQueryData<CatalogPayload>(["catalog"])
 
   const query = useQuery({
     queryKey: ["catalog"],
     queryFn: fetchCatalog,
-    initialData,
+    initialData: seedData,
     staleTime: 30_000,
     refetchOnWindowFocus: true,
   })
 
-  const visitedSet = useMemo(
-    () => new Set(query.data.visitedIds),
-    [query.data.visitedIds]
-  )
+  const visitedIds = query.data?.visitedIds
+  const visitedSet = useMemo(() => new Set(visitedIds ?? []), [visitedIds])
 
   const undoMutation = useMutation({
     mutationFn: async (place: PlaceSummary) => {
@@ -134,12 +134,16 @@ export function useCatalog(initialData: CatalogPayload) {
     })
   }
 
+  const catalog = query.data ?? seedData
+  if (!catalog) {
+    throw new Error("useCatalog must be used within GazetteerShell")
+  }
+
   return {
-    catalog: query.data,
+    catalog,
     visitedSet,
     checkIn,
     undoCheckIn: (place: PlaceSummary) => undoMutation.mutate(place),
     isPending: checkInMutation.isPending || undoMutation.isPending,
   }
 }
-
