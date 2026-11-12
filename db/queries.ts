@@ -125,14 +125,15 @@ export async function searchPlacesSql(
     return []
   }
   const pool = getPool()
+  const safeLimit = Math.max(1, Math.min(50, Math.trunc(limit) || 8))
   try {
     const [rows] = await pool.execute<RowDataPacket[]>(
       `SELECT v.*
        FROM v_place_details v
        JOIN places p ON p.id = v.id
        WHERE MATCH(p.name) AGAINST(? IN NATURAL LANGUAGE MODE)
-       LIMIT ?`,
-      [clean, limit]
+       LIMIT ${safeLimit}`,
+      [clean]
     )
     if (rows.length > 0) {
       return rows.map(mapPlace)
@@ -144,8 +145,8 @@ export async function searchPlacesSql(
     `SELECT * FROM v_place_details
      WHERE LOWER(name) LIKE ? OR LOWER(city_name) LIKE ? OR LOWER(category_label) LIKE ?
      ORDER BY name ASC
-     LIMIT ?`,
-    [like, like, like, limit]
+     LIMIT ${safeLimit}`,
+    [like, like, like]
   )
   return fallbackRows.map(mapPlace)
 }
@@ -196,4 +197,3 @@ export async function undoCheckIn(placeId: number): Promise<void> {
     )
   })
 }
-
