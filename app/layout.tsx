@@ -47,7 +47,10 @@ export default function RootLayout({
         ebGaramondHeading.variable
       )}
     >
-      <body className="min-h-dvh bg-background text-foreground selection:bg-primary/15">
+      <body
+        suppressHydrationWarning
+        className="min-h-dvh bg-background text-foreground selection:bg-primary/15"
+      >
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
