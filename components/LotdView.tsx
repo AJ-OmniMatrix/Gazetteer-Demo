@@ -127,35 +127,33 @@ function CollageGrid({
     return null
   }
   return (
-    <div className="flex min-h-0 flex-1 flex-col justify-center">
-      <div className="grid max-h-[min(54vw,32rem)] min-h-0 w-full flex-1 grid-cols-12 grid-rows-[repeat(2,minmax(0,1fr))] gap-2 sm:gap-3">
-        {tiles.map((photo, index) => (
-          <motion.div
-            key={photo.id}
-            initial={{ opacity: 0, x: -8, scale: 0.98 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{
-              duration: DURATION_ENTER,
-              ease: EASE_OUT,
-              delay: Math.min(index, 6) * ROW_STAGGER,
-            }}
-            className={cn(
-              "min-h-0 min-w-0",
-              getTileClasses(tiles.length, layoutSeed, index)
-            )}
-          >
-            <BlurHashImage
-              src={photo.imageUrl}
-              alt={`${placeName} view ${index + 1}`}
-              blurhash={photo.blurhash}
-              width={photo.width}
-              height={photo.height}
-              fill
-              className="rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
-            />
-          </motion.div>
-        ))}
-      </div>
+    <div className="grid max-h-[min(54vw,32rem)] min-h-0 w-full flex-1 grid-cols-12 grid-rows-[repeat(2,minmax(0,1fr))] gap-2 sm:gap-3">
+      {tiles.map((photo, index) => (
+        <motion.div
+          key={photo.id}
+          initial={{ opacity: 0, x: -8, scale: 0.98 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{
+            duration: DURATION_ENTER,
+            ease: EASE_OUT,
+            delay: Math.min(index, 6) * ROW_STAGGER,
+          }}
+          className={cn(
+            "min-h-0 min-w-0",
+            getTileClasses(tiles.length, layoutSeed, index)
+          )}
+        >
+          <BlurHashImage
+            src={photo.imageUrl}
+            alt={`${placeName} view ${index + 1}`}
+            blurhash={photo.blurhash}
+            width={photo.width}
+            height={photo.height}
+            fill
+            className="rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
+          />
+        </motion.div>
+      ))}
     </div>
   )
 }
@@ -179,7 +177,7 @@ export function LotdView({
   }
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col justify-between gap-3 sm:gap-5">
+    <section className="flex min-h-0 flex-1 flex-col justify-center gap-3 sm:gap-4">
       <header className="flex shrink-0 flex-col items-center gap-1 text-center">
         <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase tabular-nums sm:text-xs">
           {todayLabel}
@@ -203,7 +201,7 @@ export function LotdView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.16 }}
-        className="flex shrink-0 flex-col justify-between gap-3 rounded-4xl border border-border/80 bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:gap-5 sm:px-6 sm:py-4"
+        className="mt-2 flex shrink-0 flex-col justify-between gap-3 sm:mt-3 sm:flex-row sm:items-center sm:gap-6"
       >
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
@@ -215,7 +213,7 @@ export function LotdView({
               {lotd.lat.toFixed(4)}°, {lotd.lng.toFixed(4)}°
             </span>
           </div>
-          <h2 className="font-heading text-xl font-medium tracking-tight text-balance sm:text-2xl lg:text-[1.75rem]">
+          <h2 className="font-heading text-2xl font-medium tracking-tight text-balance sm:text-3xl">
             {lotd.name}
           </h2>
           <p className="line-clamp-2 text-xs text-muted-foreground sm:line-clamp-1 sm:text-sm">
