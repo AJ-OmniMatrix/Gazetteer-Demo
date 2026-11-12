@@ -28,7 +28,7 @@ export default async function HomePage() {
 
   return (
     <ViewTransition>
-      <GazetteerShell initialData={data}>
+      <GazetteerShell initialData={data} fitViewport>
         <LotdView
           initialData={data}
           layoutSeed={layoutSeed}

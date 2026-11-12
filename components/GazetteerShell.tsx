@@ -13,9 +13,14 @@ import type { CatalogPayload } from "@/lib/types"
 interface GazetteerShellProps {
   initialData: CatalogPayload
   children: ReactNode
+  fitViewport?: boolean
 }
 
-function InnerShell({ initialData, children }: GazetteerShellProps) {
+function InnerShell({
+  initialData,
+  children,
+  fitViewport = false,
+}: GazetteerShellProps) {
   const { catalog, visitedSet, checkIn } = useCatalog(initialData)
   const [commandOpen, setCommandOpen] = useState(false)
   const [gpsOpen, setGpsOpen] = useState(false)
@@ -33,7 +38,13 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         onOpenCommand={() => setCommandOpen(true)}
       />
 
-      <main className="mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24">
+      <main
+        className={
+          fitViewport
+            ? "mx-auto flex h-dvh w-full max-w-6xl flex-col overflow-hidden px-4 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.25rem))] pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:px-8 sm:pt-6 sm:pb-24"
+            : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
+        }
+      >
         {children}
       </main>
 
@@ -63,7 +74,11 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
   )
 }
 
-export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
+export function GazetteerShell({
+  initialData,
+  children,
+  fitViewport = false,
+}: GazetteerShellProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -77,7 +92,9 @@ export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <InnerShell initialData={initialData}>{children}</InnerShell>
+      <InnerShell initialData={initialData} fitViewport={fitViewport}>
+        {children}
+      </InnerShell>
     </QueryClientProvider>
   )
 }
