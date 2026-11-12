@@ -208,6 +208,7 @@ export function FloatingDock({
                 <Button
                   variant="ghost"
                   className="h-11 rounded-full px-4 text-sm font-medium"
+                  nativeButton={false}
                   render={<Link href="/list" />}
                 >
                   <RiListCheck2 />
@@ -232,6 +233,7 @@ export function FloatingDock({
                 <Button
                   variant="ghost"
                   className="h-11 rounded-full px-4 text-sm font-medium"
+                  nativeButton={false}
                   render={<Link href="/explore" />}
                 >
                   <RiCompass3Line />

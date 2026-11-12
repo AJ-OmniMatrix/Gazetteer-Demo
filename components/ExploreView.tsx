@@ -29,6 +29,7 @@ export function ExploreView() {
       <Button
         variant="outline"
         className="min-h-11 rounded-full px-4"
+        nativeButton={false}
         render={<Link href="/" />}
       >
         <RiArrowLeftLine />
@@ -37,4 +38,3 @@ export function ExploreView() {
     </section>
   )
 }
-

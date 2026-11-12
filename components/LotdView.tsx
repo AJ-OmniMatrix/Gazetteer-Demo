@@ -363,6 +363,7 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
           <Button
             variant="outline"
             className="min-h-11 rounded-full px-4"
+            nativeButton={false}
             render={
               <a
                 href={lotd.mapsUrl}
