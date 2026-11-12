@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef, useState, type PointerEvent } from "react"
+import gsap from "gsap"
 import {
   RiAddLine,
   RiCheckLine,
@@ -15,8 +17,12 @@ import { useCatalog } from "@/hooks/use-catalog"
 import {
   DURATION_ENTER,
   DURATION_EXIT,
+  DURATION_HOVER_ENTER,
+  DURATION_HOVER_EXIT,
   EASE_IN,
   EASE_OUT,
+  GSAP_BOUNCE_ENTER,
+  GSAP_EASE_OUT,
   ROW_STAGGER,
 } from "@/lib/motion"
 import type { CatalogPayload, PlacePhoto } from "@/lib/types"
@@ -108,6 +114,27 @@ const TILE_LAYOUTS: Record<number, [string[], string[]]> = {
   ],
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function getHoverScale(
+  tileEl: HTMLDivElement | null,
+  gridEl: HTMLDivElement | null,
+  tileCount: number
+): number {
+  if (!tileEl || !gridEl) {
+    return 1
+  }
+  const areaScale = Math.sqrt(
+    Math.max(tileEl.clientWidth * tileEl.clientHeight, 1)
+  )
+  const shrinkTotal = clamp(gridEl.clientWidth * 0.008, 4, 9)
+  const minScale = tileCount === 1 ? 0.984 : 0.97
+  const maxScale = tileCount === 1 ? 0.99 : 0.984
+  return clamp(1 - shrinkTotal / areaScale, minScale, maxScale)
+}
+
 function getTileClasses(count: number, variant: number, index: number): string {
   const clamped = Math.min(Math.max(count, 1), 7)
   return TILE_LAYOUTS[clamped][variant % 2][index] ?? "col-span-4"
@@ -123,36 +150,159 @@ function CollageGrid({
   layoutSeed: number
 }) {
   const tiles = photos.slice(0, 7)
-  if (tiles.length === 0) {
+  const tileCount = tiles.length
+  const gridRef = useRef<HTMLDivElement>(null)
+  const tileRefs = useRef<(HTMLDivElement | null)[]>([])
+  const entryRefs = useRef<(HTMLDivElement | null)[]>([])
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const mediaRefs = useRef<(HTMLDivElement | null)[]>([])
+  const reducedMotionRef = useRef(false)
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    const gridEl = gridRef.current
+    if (!gridEl || tileCount === 0) {
+      return
+    }
+    const entryEls = entryRefs.current
+      .slice(0, tileCount)
+      .filter((el): el is HTMLDivElement => Boolean(el))
+    const cards = cardRefs.current.slice(0, tileCount)
+    const mediaEls = mediaRefs.current.slice(0, tileCount)
+
+    const mm = gsap.matchMedia()
+    mm.add(
+      {
+        reduce: "(prefers-reduced-motion: reduce)",
+        normal: "(min-width: 0px)",
+      },
+      (context) => {
+        const isReduced = Boolean(context.conditions?.reduce)
+        reducedMotionRef.current = isReduced
+        if (isReduced) {
+          gsap.set(entryEls, { opacity: 1, x: 0, scale: 1 })
+          gsap.set(cards, { scale: 1 })
+          gsap.set(mediaEls, { scale: 1 })
+          return
+        }
+        gsap.fromTo(
+          entryEls,
+          { opacity: 0, x: -8, scale: 0.98 },
+          {
+            opacity: 1,
+            x: 0,
+            scale: 1,
+            duration: DURATION_ENTER,
+            ease: GSAP_EASE_OUT,
+            stagger: ROW_STAGGER,
+            clearProps: "transform",
+            force3D: true,
+          }
+        )
+      }
+    )
+
+    return () => {
+      mm.revert()
+      gsap.killTweensOf([...entryEls, ...cards, ...mediaEls])
+    }
+  }, [tileCount, layoutSeed])
+
+  const activeIndex =
+    hoveredIndex !== null && hoveredIndex < tileCount ? hoveredIndex : null
+
+  useEffect(() => {
+    if (tileCount === 0 || reducedMotionRef.current) {
+      return
+    }
+    for (let index = 0; index < tileCount; index++) {
+      const cardEl = cardRefs.current[index]
+      const mediaEl = mediaRefs.current[index]
+      if (!cardEl) {
+        continue
+      }
+      const isActive = activeIndex === index
+      const scale = isActive
+        ? getHoverScale(tileRefs.current[index], gridRef.current, tileCount)
+        : 1
+      gsap.to(cardEl, {
+        scale,
+        duration: isActive ? DURATION_HOVER_ENTER : DURATION_HOVER_EXIT,
+        ease: isActive ? GSAP_BOUNCE_ENTER : GSAP_EASE_OUT,
+        overwrite: "auto",
+        force3D: true,
+        onUpdate: () => {
+          if (!mediaEl) {
+            return
+          }
+          const liveScale = Number(gsap.getProperty(cardEl, "scaleX")) || 1
+          gsap.set(mediaEl, {
+            scale: Math.max(1, 1 / liveScale),
+            force3D: true,
+          })
+        },
+      })
+    }
+  }, [activeIndex, tileCount])
+
+  if (tileCount === 0) {
     return null
   }
+
+  const handleTilePointer =
+    (index: number) => (event: PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType !== "touch") {
+        setHoveredIndex(index)
+      }
+    }
+
   return (
-    <div className="grid max-h-[min(54vw,32rem)] min-h-0 w-full flex-1 grid-cols-12 grid-rows-[repeat(2,minmax(0,1fr))] gap-2 sm:gap-3">
+    <div
+      ref={gridRef}
+      onPointerLeave={() => setHoveredIndex(null)}
+      onPointerCancel={() => setHoveredIndex(null)}
+      className="relative grid max-h-[min(54vw,32rem)] min-h-0 w-full flex-1 grid-cols-12 grid-rows-[repeat(2,minmax(0,1fr))] gap-2 sm:gap-3"
+    >
       {tiles.map((photo, index) => (
-        <motion.div
+        <div
           key={photo.id}
-          initial={{ opacity: 0, x: -8, scale: 0.98 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{
-            duration: DURATION_ENTER,
-            ease: EASE_OUT,
-            delay: Math.min(index, 6) * ROW_STAGGER,
+          ref={(el) => {
+            tileRefs.current[index] = el
           }}
+          onPointerEnter={handleTilePointer(index)}
+          onPointerMove={handleTilePointer(index)}
           className={cn(
-            "min-h-0 min-w-0",
-            getTileClasses(tiles.length, layoutSeed, index)
+            "relative min-h-0 min-w-0",
+            getTileClasses(tileCount, layoutSeed, index)
           )}
         >
-          <BlurHashImage
-            src={photo.imageUrl}
-            alt={`${placeName} view ${index + 1}`}
-            blurhash={photo.blurhash}
-            width={photo.width}
-            height={photo.height}
-            fill
-            className="rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
-          />
-        </motion.div>
+          <div
+            ref={(el) => {
+              entryRefs.current[index] = el
+            }}
+            className="size-full opacity-0"
+          >
+            <div
+              ref={(el) => {
+                cardRefs.current[index] = el
+              }}
+              className="relative size-full will-change-transform"
+            >
+              <BlurHashImage
+                src={photo.imageUrl}
+                alt={`${placeName} view ${index + 1}`}
+                blurhash={photo.blurhash}
+                width={photo.width}
+                height={photo.height}
+                fill
+                mediaRef={(el) => {
+                  mediaRefs.current[index] = el
+                }}
+                className="rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
+              />
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   )
