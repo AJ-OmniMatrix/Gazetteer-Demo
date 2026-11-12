@@ -50,7 +50,11 @@ export function BlurHashImage({
 
   return (
     <div
-      className={cn("relative overflow-hidden bg-muted", fill && "size-full", className)}
+      className={cn(
+        "relative overflow-hidden bg-muted",
+        fill && "size-full",
+        className
+      )}
       style={fill ? undefined : { aspectRatio: `${width} / ${height}` }}
     >
       <canvas
@@ -76,7 +80,7 @@ export function BlurHashImage({
               }
         }
         transition={{ duration: 0.32, ease: EASE_OUT }}
-        className="relative size-full"
+        className={cn(fill ? "absolute inset-0" : "relative size-full")}
       >
         <Image
           src={src}
