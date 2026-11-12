@@ -48,11 +48,27 @@ export async function getCatalogData(): Promise<CatalogPayload> {
   }
   const pool = getPool()
 
-  const [userRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, display_name, handle, avatar_url, avatar_blurhash
-     FROM users WHERE id = ? LIMIT 1`,
-    [DEMO_USER_ID]
-  )
+  const [[userRows], [placeRows], [lotdRows], [visitRows]] = await Promise.all([
+    pool.execute<RowDataPacket[]>(
+      `SELECT id, display_name, handle, avatar_url, avatar_blurhash
+       FROM users WHERE id = ? LIMIT 1`,
+      [DEMO_USER_ID]
+    ),
+    pool.query<RowDataPacket[]>(
+      `SELECT * FROM v_place_details ORDER BY name ASC`
+    ),
+    pool.query<RowDataPacket[]>(
+      `SELECT * FROM v_place_details
+       WHERE featured_date IS NOT NULL AND featured_date <= CURDATE()
+       ORDER BY featured_date DESC, id ASC
+       LIMIT 1`
+    ),
+    pool.execute<RowDataPacket[]>(
+      `SELECT place_id FROM visits WHERE user_id = ?`,
+      [DEMO_USER_ID]
+    ),
+  ])
+
   if (userRows.length === 0) {
     throw new Error("Demo user missing. Run npm run db:setup first.")
   }
@@ -65,17 +81,7 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     avatarBlurhash: String(u.avatar_blurhash),
   }
 
-  const [placeRows] = await pool.query<RowDataPacket[]>(
-    `SELECT * FROM v_place_details ORDER BY name ASC`
-  )
   const places = placeRows.map(mapPlace)
-
-  const [lotdRows] = await pool.query<RowDataPacket[]>(
-    `SELECT * FROM v_place_details
-     WHERE featured_date IS NOT NULL AND featured_date <= CURDATE()
-     ORDER BY featured_date DESC, id ASC
-     LIMIT 1`
-  )
   const lotdRow = lotdRows[0] ?? placeRows[0]
   if (!lotdRow) {
     throw new Error("No places seeded. Run npm run db:setup first.")
@@ -98,10 +104,6 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     sortOrder: Number(p.sort_order),
   }))
 
-  const [visitRows] = await pool.execute<RowDataPacket[]>(
-    `SELECT place_id FROM visits WHERE user_id = ?`,
-    [DEMO_USER_ID]
-  )
   const visitedIds = visitRows.map((v) => Number(v.place_id))
 
   const lotd: LocationOfTheDay = {
