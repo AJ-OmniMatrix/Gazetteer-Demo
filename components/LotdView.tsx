@@ -2,24 +2,18 @@
 
 import { useEffect, useRef, useState, type PointerEvent } from "react"
 import gsap from "gsap"
-import {
-  RiAddLine,
-  RiCheckLine,
-  RiExternalLinkLine,
-  RiMapPin2Line,
-} from "@remixicon/react"
-import { AnimatePresence, motion } from "motion/react"
+import { RiExternalLinkLine, RiMapPin2Line } from "@remixicon/react"
+import { motion } from "motion/react"
 import BlurText from "@/components/BlurText"
 import { BlurHashImage } from "@/components/BlurHashImage"
+import { VisitStatusButton } from "@/components/VisitStatusButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCatalog } from "@/hooks/use-catalog"
 import {
   DURATION_ENTER,
-  DURATION_EXIT,
   DURATION_HOVER_ENTER,
   DURATION_HOVER_EXIT,
-  EASE_IN,
   EASE_OUT,
   GSAP_BOUNCE_ENTER,
   GSAP_EASE_OUT,
@@ -388,55 +382,14 @@ export function LotdView({
             <RiExternalLinkLine className="size-3.5 opacity-60" />
           </Button>
 
-          <motion.div
-            animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
-            transition={{ duration: 0.24, ease: EASE_OUT }}
-          >
-            <Button
-              variant={visited ? "secondary" : "default"}
-              className="min-h-11 rounded-full px-5"
-              disabled={isPending}
-              onClick={handleQuickAdd}
-            >
-              <AnimatePresence mode="popLayout" initial={false}>
-                {visited ? (
-                  <motion.span
-                    key="visited"
-                    initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
-                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                    exit={{
-                      opacity: 0,
-                      filter: "blur(2px)",
-                      scale: 0.92,
-                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
-                    }}
-                    transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    <RiCheckLine />
-                    <span>In Your List</span>
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="add"
-                    initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
-                    animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-                    exit={{
-                      opacity: 0,
-                      filter: "blur(2px)",
-                      scale: 0.92,
-                      transition: { duration: DURATION_EXIT, ease: EASE_IN },
-                    }}
-                    transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    <RiAddLine />
-                    <span>Add to List</span>
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </Button>
-          </motion.div>
+          <VisitStatusButton
+            visited={visited}
+            activeLabel="In Your List"
+            idleLabel="Add to List"
+            disabled={isPending}
+            className="min-h-11 px-5"
+            onClick={handleQuickAdd}
+          />
         </div>
       </motion.div>
     </section>

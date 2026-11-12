@@ -5,7 +5,6 @@ import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
 import {
   RiAddLine,
-  RiCheckLine,
   RiCloseLine,
   RiCompass3Line,
   RiCrosshair2Line,
@@ -15,6 +14,7 @@ import {
   RiSearchLine,
 } from "@remixicon/react"
 import { searchPlacesAction } from "@/app/actions"
+import { VisitStatusButton } from "@/components/VisitStatusButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -54,67 +54,6 @@ const DEMO_COORDS = [
   { label: "Paris", lat: 48.8566, lng: 2.3522 },
 ]
 
-function CheckInStatusButton({
-  visited,
-  onClick,
-}: {
-  visited: boolean
-  onClick: () => void
-}) {
-  return (
-    <motion.div
-      animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
-      transition={{ duration: 0.22, ease: EASE_OUT }}
-    >
-      <Button
-        variant={visited ? "secondary" : "default"}
-        size="sm"
-        className="min-h-10 shrink-0 rounded-full px-4"
-        disabled={visited}
-        onClick={onClick}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          {visited ? (
-            <motion.span
-              key="visited"
-              initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              exit={{
-                opacity: 0,
-                filter: "blur(2px)",
-                scale: 0.92,
-                transition: { duration: DURATION_EXIT, ease: EASE_IN },
-              }}
-              transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-              className="inline-flex items-center gap-1"
-            >
-              <RiCheckLine />
-              <span>Visited</span>
-            </motion.span>
-          ) : (
-            <motion.span
-              key="add"
-              initial={{ opacity: 0, filter: "blur(2px)", scale: 0.92 }}
-              animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
-              exit={{
-                opacity: 0,
-                filter: "blur(2px)",
-                scale: 0.92,
-                transition: { duration: DURATION_EXIT, ease: EASE_IN },
-              }}
-              transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-              className="inline-flex items-center gap-1"
-            >
-              <RiAddLine />
-              <span>Add</span>
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </Button>
-    </motion.div>
-  )
-}
-
 export function FloatingDock({
   places,
   visitedSet,
@@ -125,9 +64,17 @@ export function FloatingDock({
   onCheckIn,
 }: FloatingDockProps) {
   const [expanded, setExpanded] = useState(false)
+  const [hasToggled, setHasToggled] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
 
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const toggleExpanded = (next: boolean) => {
+    setHasToggled(true)
+    setExpanded(next)
+  }
+
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null
+  )
   const [locating, setLocating] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
 
@@ -169,7 +116,9 @@ export function FloatingDock({
 
   const detectLocation = () => {
     if (!("geolocation" in navigator)) {
-      setGeoError("Geolocation is unavailable in this browser. Pick a demo city below.")
+      setGeoError(
+        "Geolocation is unavailable in this browser. Pick a demo city below."
+      )
       return
     }
     setLocating(true)
@@ -180,7 +129,9 @@ export function FloatingDock({
         setLocating(false)
       },
       () => {
-        setGeoError("Location permission denied or unavailable. Try a sample city below.")
+        setGeoError(
+          "Location permission denied or unavailable. Try a sample city below."
+        )
         setLocating(false)
       },
       { enableHighAccuracy: true, timeout: 8000 }
@@ -235,7 +186,9 @@ export function FloatingDock({
         <motion.nav
           layout
           aria-label="Primary actions"
-          transition={{ layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT } }}
+          transition={{
+            layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
+          }}
           className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1.5 shadow-lg backdrop-blur-md"
         >
           <AnimatePresence mode="popLayout" initial={false}>
@@ -262,15 +215,15 @@ export function FloatingDock({
                 </Button>
 
                 <motion.div
-                  animate={{ scaleX: [1, 1.12, 1] }}
-                  transition={{ duration: 0.22, ease: EASE_OUT }}
+                  animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
+                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
                 >
                   <Button
                     size="icon-lg"
                     className="size-11 rounded-full shadow-sm"
                     aria-label="Expand add location options"
                     aria-expanded={expanded}
-                    onClick={() => setExpanded(true)}
+                    onClick={() => toggleExpanded(true)}
                   >
                     <RiAddLine className="size-5" />
                   </Button>
@@ -326,15 +279,15 @@ export function FloatingDock({
                 </Button>
 
                 <motion.div
-                  animate={{ scaleX: [1, 1.12, 1] }}
-                  transition={{ duration: 0.22, ease: EASE_OUT }}
+                  animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
+                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
                 >
                   <Button
                     variant="ghost"
                     size="icon-lg"
                     className="size-11 rounded-full"
                     aria-label="Close add menu"
-                    onClick={() => setExpanded(false)}
+                    onClick={() => toggleExpanded(false)}
                   >
                     <RiCloseLine className="size-5" />
                   </Button>
@@ -437,8 +390,13 @@ export function FloatingDock({
                         </span>
                       </div>
                     </div>
-                    <CheckInStatusButton
+                    <VisitStatusButton
                       visited={visitedSet.has(item.id)}
+                      activeLabel="Visited"
+                      idleLabel="Add"
+                      size="sm"
+                      disabled={visitedSet.has(item.id)}
+                      className="min-h-10 shrink-0 px-4"
                       onClick={() => onCheckIn(item, "gps")}
                     />
                   </motion.div>
@@ -518,8 +476,13 @@ export function FloatingDock({
                         </Badge>
                       </div>
                     </div>
-                    <CheckInStatusButton
+                    <VisitStatusButton
                       visited={visitedSet.has(place.id)}
+                      activeLabel="Visited"
+                      idleLabel="Add"
+                      size="sm"
+                      disabled={visitedSet.has(place.id)}
+                      className="min-h-10 shrink-0 px-4"
                       onClick={() => onCheckIn(place, "search")}
                     />
                   </motion.div>
