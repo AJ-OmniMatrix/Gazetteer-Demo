@@ -8,6 +8,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { CommandMenu } from "@/components/CommandMenu"
 import { FloatingDock } from "@/components/FloatingDock"
 import { TopRightPill } from "@/components/TopRightPill"
+import { ScrollReveal } from "@/components/ScrollReveal"
 import { useCatalog } from "@/hooks/use-catalog"
 import type { CatalogPayload } from "@/lib/types"
 
@@ -36,25 +37,31 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         onOpenCommand={() => setCommandOpen(true)}
       />
 
-      <main
-        className={
-          fitViewport
-            ? "mx-auto flex h-dvh w-full max-w-6xl flex-col overflow-hidden px-4 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.25rem))] pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:px-8 sm:pt-6 sm:pb-24"
-            : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
+      <ScrollReveal
+        fitViewport={fitViewport}
+        disabled={commandOpen || gpsOpen || searchOpen || helpOpen}
+        dock={
+          <FloatingDock
+            places={catalog.places}
+            visitedSet={visitedSet}
+            gpsOpen={gpsOpen}
+            onGpsOpenChange={setGpsOpen}
+            searchOpen={searchOpen}
+            onSearchOpenChange={setSearchOpen}
+            onCheckIn={checkIn}
+          />
         }
       >
-        {children}
-      </main>
-
-      <FloatingDock
-        places={catalog.places}
-        visitedSet={visitedSet}
-        gpsOpen={gpsOpen}
-        onGpsOpenChange={setGpsOpen}
-        searchOpen={searchOpen}
-        onSearchOpenChange={setSearchOpen}
-        onCheckIn={checkIn}
-      />
+        <main
+          className={
+            fitViewport
+              ? "mx-auto flex h-dvh w-full max-w-6xl flex-col overflow-hidden px-4 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.25rem))] pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:px-8 sm:pt-6 sm:pb-24"
+              : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
+          }
+        >
+          {children}
+        </main>
+      </ScrollReveal>
 
       <CommandMenu
         open={commandOpen}
