@@ -3,19 +3,19 @@ import { getPool, withTransaction } from "./index"
 import {
   checkInMemory,
   getMemoryCatalogData,
+  getUserVisitsMemory,
   searchMemoryPlaces,
   undoCheckInMemory,
 } from "./memory"
 import type {
   CatalogPayload,
-  DemoUser,
   LocationOfTheDay,
   PlacePhoto,
   PlaceSummary,
+  User,
+  UserVisitItem,
   VisitSource,
 } from "@/lib/types"
-
-export const DEMO_USER_ID = 1
 
 function hasDatabase(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim())
@@ -42,49 +42,38 @@ function mapPlace(row: RowDataPacket): PlaceSummary {
   }
 }
 
-export async function getCatalogData(): Promise<CatalogPayload> {
+export async function getCatalogData(
+  currentUser?: User | null
+): Promise<CatalogPayload> {
   if (!hasDatabase()) {
-    return getMemoryCatalogData()
+    return getMemoryCatalogData(currentUser)
   }
   const pool = getPool()
 
-  const [[userRows], [placeRows], [photoRows], [lotdRows], [visitRows]] =
-    await Promise.all([
-      pool.execute<RowDataPacket[]>(
-        `SELECT id, display_name, handle, avatar_url, avatar_blurhash
-       FROM users WHERE id = ? LIMIT 1`,
-        [DEMO_USER_ID]
-      ),
-      pool.query<RowDataPacket[]>(
-        `SELECT * FROM v_place_details ORDER BY name ASC`
-      ),
-      pool.query<RowDataPacket[]>(
-        `SELECT id, place_id, image_url, blurhash, width, height, sort_order
+  const [[placeRows], [photoRows], [lotdRows]] = await Promise.all([
+    pool.query<RowDataPacket[]>(
+      `SELECT * FROM v_place_details ORDER BY name ASC`
+    ),
+    pool.query<RowDataPacket[]>(
+      `SELECT id, place_id, image_url, blurhash, width, height, sort_order
        FROM place_photos
        ORDER BY place_id ASC, sort_order ASC, id ASC`
-      ),
-      pool.query<RowDataPacket[]>(
-        `SELECT * FROM v_place_details
+    ),
+    pool.query<RowDataPacket[]>(
+      `SELECT * FROM v_place_details
        WHERE featured_date IS NOT NULL AND featured_date <= CURDATE()
        ORDER BY featured_date DESC, id ASC
        LIMIT 1`
-      ),
-      pool.execute<RowDataPacket[]>(
-        `SELECT place_id FROM visits WHERE user_id = ?`,
-        [DEMO_USER_ID]
-      ),
-    ])
+    ),
+  ])
 
-  if (userRows.length === 0) {
-    throw new Error("Demo user missing. Run npm run db:setup first.")
-  }
-  const u = userRows[0]
-  const user: DemoUser = {
-    id: Number(u.id),
-    displayName: String(u.display_name),
-    handle: String(u.handle),
-    avatarUrl: String(u.avatar_url),
-    avatarBlurhash: String(u.avatar_blurhash),
+  let visitedIds: number[] = []
+  if (currentUser?.id) {
+    const [visitRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT place_id FROM visits WHERE user_id = ?`,
+      [currentUser.id]
+    )
+    visitedIds = visitRows.map((v) => Number(v.place_id))
   }
 
   const photosByPlaceId = new Map<number, PlacePhoto[]>()
@@ -112,7 +101,6 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     }
   })
 
-  const visitedIds = visitRows.map((v) => Number(v.place_id))
   const lotdRow = lotdRows[0] ?? placeRows[0]
   let lotd: LocationOfTheDay | null = null
   if (lotdRow) {
@@ -126,7 +114,13 @@ export async function getCatalogData(): Promise<CatalogPayload> {
     }
   }
 
-  return { mode: "tidb", user, lotd, places, visitedIds }
+  return {
+    mode: "tidb",
+    user: currentUser ?? null,
+    lotd,
+    places,
+    visitedIds,
+  }
 }
 
 export async function searchPlacesSql(
@@ -168,17 +162,18 @@ export async function searchPlacesSql(
 }
 
 export async function checkInPlace(
+  userId: number,
   placeId: number,
   source: VisitSource,
   idempotencyKey: string
 ): Promise<{ alreadyVisited: boolean }> {
   if (!hasDatabase()) {
-    return checkInMemory(placeId, idempotencyKey)
+    return checkInMemory(userId, placeId, source, idempotencyKey)
   }
   return withTransaction(async (conn) => {
     const [byKey] = await conn.execute<RowDataPacket[]>(
       `SELECT id FROM visits WHERE user_id = ? AND idempotency_key = ? LIMIT 1`,
-      [DEMO_USER_ID, idempotencyKey]
+      [userId, idempotencyKey]
     )
     if (byKey.length > 0) {
       return { alreadyVisited: true }
@@ -186,7 +181,7 @@ export async function checkInPlace(
 
     const [byPlace] = await conn.execute<RowDataPacket[]>(
       `SELECT id FROM visits WHERE user_id = ? AND place_id = ? LIMIT 1`,
-      [DEMO_USER_ID, placeId]
+      [userId, placeId]
     )
     if (byPlace.length > 0) {
       return { alreadyVisited: true }
@@ -195,21 +190,88 @@ export async function checkInPlace(
     await conn.execute(
       `INSERT INTO visits (user_id, place_id, source, idempotency_key)
        VALUES (?, ?, ?, ?)`,
-      [DEMO_USER_ID, placeId, source, idempotencyKey]
+      [userId, placeId, source, idempotencyKey]
     )
     return { alreadyVisited: false }
   })
 }
 
-export async function undoCheckIn(placeId: number): Promise<void> {
+export async function undoCheckIn(
+  userId: number,
+  placeId: number
+): Promise<void> {
   if (!hasDatabase()) {
-    undoCheckInMemory(placeId)
+    undoCheckInMemory(userId, placeId)
     return
   }
   await withTransaction(async (conn) => {
     await conn.execute(
       `DELETE FROM visits WHERE user_id = ? AND place_id = ?`,
-      [DEMO_USER_ID, placeId]
+      [userId, placeId]
     )
+  })
+}
+
+export async function getUserVisits(userId: number): Promise<UserVisitItem[]> {
+  if (!hasDatabase()) {
+    return getUserVisitsMemory(userId)
+  }
+
+  const pool = getPool()
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT
+       v.id AS visit_id,
+       v.place_id,
+       v.source,
+       v.visited_at,
+       p.*
+     FROM visits v
+     JOIN v_place_details p ON p.id = v.place_id
+     WHERE v.user_id = ?
+     ORDER BY v.visited_at DESC, v.id DESC`,
+    [userId]
+  )
+
+  if (rows.length === 0) {
+    return []
+  }
+
+  const placeIds = Array.from(new Set(rows.map((r) => Number(r.place_id))))
+  const [photoRows] = await pool.query<RowDataPacket[]>(
+    `SELECT id, place_id, image_url, blurhash, width, height, sort_order
+     FROM place_photos
+     WHERE place_id IN (${placeIds.join(",")})
+     ORDER BY place_id ASC, sort_order ASC, id ASC`
+  )
+
+  const photosByPlaceId = new Map<number, PlacePhoto[]>()
+  for (const p of photoRows) {
+    const placeId = Number(p.place_id)
+    const list = photosByPlaceId.get(placeId) ?? []
+    list.push({
+      id: Number(p.id),
+      imageUrl: String(p.image_url),
+      blurhash: String(p.blurhash),
+      width: Number(p.width),
+      height: Number(p.height),
+      sortOrder: Number(p.sort_order),
+    })
+    photosByPlaceId.set(placeId, list)
+  }
+
+  return rows.map((row) => {
+    const summary = mapPlace(row)
+    const photos = photosByPlaceId.get(summary.id) ?? []
+    return {
+      id: Number(row.visit_id),
+      placeId: summary.id,
+      visitedAt: new Date(row.visited_at).toISOString(),
+      source: row.source as VisitSource,
+      place: {
+        ...summary,
+        primaryPhoto: photos[0],
+        photos,
+      },
+    }
   })
 }

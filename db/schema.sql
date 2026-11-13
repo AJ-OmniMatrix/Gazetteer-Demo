@@ -4,8 +4,20 @@ CREATE TABLE IF NOT EXISTS users (
   handle VARCHAR(40) NOT NULL,
   avatar_url VARCHAR(500) NOT NULL,
   avatar_blurhash VARCHAR(64) NOT NULL,
+  is_developer BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_users_handle (handle)
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  session_token VARCHAR(128) NOT NULL UNIQUE,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_sessions_token (session_token),
+  INDEX idx_sessions_user (user_id),
+  CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS countries (
@@ -72,7 +84,7 @@ CREATE TABLE IF NOT EXISTS visits (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   user_id BIGINT UNSIGNED NOT NULL,
   place_id BIGINT UNSIGNED NOT NULL,
-  source ENUM('lotd_quick_add', 'gps', 'search') NOT NULL,
+  source ENUM('lotd_quick_add', 'gps', 'search', 'explore', 'list') NOT NULL,
   idempotency_key VARCHAR(64) NOT NULL,
   visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_visits_user_place (user_id, place_id),
@@ -105,4 +117,3 @@ FROM places p
 JOIN cities c ON c.id = p.city_id
 JOIN countries co ON co.code = c.country_code
 JOIN categories cat ON cat.id = p.category_id;
-

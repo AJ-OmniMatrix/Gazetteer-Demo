@@ -7,7 +7,7 @@ import {
   SEED_CITIES,
   SEED_COUNTRIES,
   SEED_PLACES,
-  SEED_USER,
+  SEED_USERS,
 } from "./seed-data"
 
 try {
@@ -23,21 +23,37 @@ async function main() {
     )
     await pool.query(schemaSql)
 
-    await pool.execute(
-      `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash)
-       VALUES (?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         display_name = VALUES(display_name),
-         avatar_url = VALUES(avatar_url),
-         avatar_blurhash = VALUES(avatar_blurhash)`,
-      [
-        SEED_USER.id,
-        SEED_USER.displayName,
-        SEED_USER.handle,
-        SEED_USER.avatarUrl,
-        SEED_USER.avatarBlurhash,
-      ]
-    )
+    try {
+      await pool.query(
+        "ALTER TABLE users ADD COLUMN is_developer BOOLEAN NOT NULL DEFAULT FALSE"
+      )
+    } catch {}
+
+    try {
+      await pool.query(
+        "ALTER TABLE visits MODIFY COLUMN source ENUM('lotd_quick_add', 'gps', 'search', 'explore', 'list') NOT NULL"
+      )
+    } catch {}
+
+    for (const user of SEED_USERS) {
+      await pool.execute(
+        `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash, is_developer)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           display_name = VALUES(display_name),
+           avatar_url = VALUES(avatar_url),
+           avatar_blurhash = VALUES(avatar_blurhash),
+           is_developer = VALUES(is_developer)`,
+        [
+          user.id,
+          user.displayName,
+          user.handle,
+          user.avatarUrl,
+          user.avatarBlurhash,
+          user.isDeveloper ? 1 : 0,
+        ]
+      )
+    }
 
     for (const country of SEED_COUNTRIES) {
       await pool.execute(

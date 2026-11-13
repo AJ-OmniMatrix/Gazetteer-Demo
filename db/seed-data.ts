@@ -22,13 +22,26 @@ export interface RawPlaceInput {
   photos: SeedPhoto[]
 }
 
-export const SEED_USER = {
-  id: 1,
-  displayName: "Aarav Sen",
-  handle: "aarav",
-  avatarUrl: "/images/avatar.png",
-  avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
-}
+export const SEED_USERS = [
+  {
+    id: 1,
+    displayName: "Aarav Sen",
+    handle: "aarav",
+    avatarUrl: "/images/avatar.png",
+    avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
+    isDeveloper: true,
+  },
+  {
+    id: 2,
+    displayName: "Maya Lin",
+    handle: "maya",
+    avatarUrl: "/images/avatar.png",
+    avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
+    isDeveloper: true,
+  },
+]
+
+export const SEED_USER = SEED_USERS[0]
 
 export const SEED_COUNTRIES = [
   { code: "JP", name: "Japan" },
