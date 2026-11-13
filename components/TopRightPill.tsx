@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import {
-  RiCompass3Line,
-  RiListCheck2,
-  RiLoginBoxLine,
-  RiLogoutBoxRLine,
-  RiQuestionLine,
-  RiSearchLine,
-  RiUserLine,
-} from "@remixicon/react"
+  Compass,
+  HelpCircle,
+  ListCheck,
+  LogIn,
+  LogOut,
+  Search,
+  User as UserIcon,
+} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -105,21 +105,21 @@ export function TopRightPill({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuItem render={<Link href="/list" />}>
-                <RiListCheck2 />
+                <ListCheck />
                 <span>Your List</span>
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/explore" />}>
-                <RiCompass3Line />
+                <Compass />
                 <span>Explore Cities</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onOpenCommand}>
-                <RiSearchLine />
+                <Search />
                 <span>Command Palette</span>
                 <DropdownMenuShortcut>Ctrl K</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled>
-                <RiUserLine />
+                <UserIcon />
                 <span>
                   {mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}
                 </span>
@@ -129,7 +129,7 @@ export function TopRightPill({
                 onClick={onLogout}
                 className="text-destructive focus:text-destructive"
               >
-                <RiLogoutBoxRLine />
+                <LogOut />
                 <span>Sign Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -141,7 +141,7 @@ export function TopRightPill({
             className="h-10 gap-1.5 rounded-full px-3 text-xs font-medium"
             onClick={onOpenAuth}
           >
-            <RiLoginBoxLine className="size-4 text-primary" />
+            <LogIn className="size-4 text-primary" />
             <span>Sign In</span>
           </Button>
         )}
@@ -153,7 +153,7 @@ export function TopRightPill({
           aria-label="Help and keyboard shortcuts"
           onClick={() => onHelpOpenChange(true)}
         >
-          <RiQuestionLine className="size-5" />
+          <HelpCircle className="size-5" />
         </Button>
       </div>
 

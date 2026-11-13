@@ -1,6 +1,6 @@
 "use client"
 
-import { RiAddLine, RiCheckLine } from "@remixicon/react"
+import { Check, Plus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { Button } from "@/components/ui/button"
 import { DURATION_ENTER, DURATION_EXIT, EASE_IN, EASE_OUT } from "@/lib/motion"
@@ -50,7 +50,11 @@ export function VisitStatusButton({
             transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
             className="inline-flex items-center gap-1.5"
           >
-            {visited ? <RiCheckLine /> : <RiAddLine />}
+            {visited ? (
+              <Check className="size-4" />
+            ) : (
+              <Plus className="size-4" />
+            )}
             <span>{visited ? activeLabel : idleLabel}</span>
           </motion.span>
         </AnimatePresence>

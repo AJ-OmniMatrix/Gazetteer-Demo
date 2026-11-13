@@ -4,16 +4,16 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 import {
-  RiArrowLeftLine,
-  RiCompass3Line,
-  RiDeleteBinLine,
-  RiExternalLinkLine,
-  RiFlashlightLine,
-  RiListCheck2,
-  RiLockLine,
-  RiMapPin2Line,
-  RiTimeLine,
-} from "@remixicon/react"
+  ArrowLeft,
+  Clock,
+  Compass,
+  ExternalLink,
+  ListCheck,
+  Lock,
+  MapPin,
+  Trash2,
+  Zap,
+} from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { Badge } from "@/components/ui/badge"
@@ -130,7 +130,7 @@ export function ListView({
     return (
       <section className="mx-auto flex max-w-xl flex-col items-center justify-center gap-4 rounded-4xl border bg-card p-8 text-center shadow-xs sm:p-10">
         <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <RiLockLine className="size-7" />
+          <Lock className="size-7" />
         </div>
         <Badge
           variant="secondary"
@@ -153,7 +153,7 @@ export function ListView({
               openAuth("Sign in to view and manage your travel list")
             }
           >
-            <RiFlashlightLine />
+            <Zap />
             <span>Sign In / Test Login</span>
           </Button>
 
@@ -163,7 +163,7 @@ export function ListView({
             nativeButton={false}
             render={<Link href="/explore" prefetch={true} />}
           >
-            <RiCompass3Line />
+            <Compass />
             <span>Explore Cities</span>
           </Button>
         </div>
@@ -176,7 +176,7 @@ export function ListView({
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-primary">
-            <RiListCheck2 className="size-5" />
+            <ListCheck className="size-5" />
             <span className="font-mono text-xs tracking-wider uppercase">
               Personal Catalogue
             </span>
@@ -197,7 +197,7 @@ export function ListView({
             nativeButton={false}
             render={<Link href="/explore" prefetch={true} />}
           >
-            <RiCompass3Line className="size-4 text-primary" />
+            <Compass className="size-4 text-primary" />
             <span>Explore Cities</span>
           </Button>
           <Button
@@ -207,7 +207,7 @@ export function ListView({
             nativeButton={false}
             render={<Link href="/" prefetch={true} />}
           >
-            <RiArrowLeftLine className="size-4" />
+            <ArrowLeft className="size-4" />
             <span>LOTD</span>
           </Button>
         </div>
@@ -323,7 +323,7 @@ export function ListView({
       ) : visits.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-4xl border border-dashed bg-card/40 py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <RiListCheck2 className="size-6" />
+            <ListCheck className="size-6" />
           </div>
           <h2 className="font-heading text-2xl font-medium tracking-tight">
             No Visits Logged Yet
@@ -339,7 +339,7 @@ export function ListView({
               nativeButton={false}
               render={<Link href="/explore" />}
             >
-              <RiCompass3Line />
+              <Compass />
               <span>Explore Places</span>
             </Button>
           </div>
@@ -395,7 +395,7 @@ export function ListView({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                          <RiCompass3Line className="size-8 opacity-40" />
+                          <Compass className="size-8 opacity-40" />
                         </div>
                       )}
 
@@ -415,7 +415,7 @@ export function ListView({
                           {place.cityName}, {place.countryCode}
                         </span>
                         <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums">
-                          <RiTimeLine className="size-3" />
+                          <Clock className="size-3" />
                           {visitDate}
                         </span>
                       </div>
@@ -443,9 +443,9 @@ export function ListView({
                         />
                       }
                     >
-                      <RiMapPin2Line className="size-3.5" />
+                      <MapPin className="size-3.5" />
                       <span>Maps</span>
-                      <RiExternalLinkLine className="size-3 opacity-60" />
+                      <ExternalLink className="size-3 opacity-60" />
                     </Button>
 
                     <Button
@@ -454,7 +454,7 @@ export function ListView({
                       className="h-9 rounded-full px-3 text-xs text-muted-foreground hover:text-destructive"
                       onClick={() => undoCheckIn(place)}
                     >
-                      <RiDeleteBinLine className="size-3.5" />
+                      <Trash2 className="size-3.5" />
                       <span>Remove</span>
                     </Button>
                   </div>

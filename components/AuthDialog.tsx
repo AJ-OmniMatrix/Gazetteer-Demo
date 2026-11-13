@@ -1,13 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import {
-  RiCodeSSlashLine,
-  RiFlashlightLine,
-  RiLoader4Line,
-  RiUserFollowLine,
-  RiUserLine,
-} from "@remixicon/react"
+import { Code2, Loader2, User, UserCheck, Zap } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -82,7 +76,7 @@ export function AuthDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 text-primary">
-            <RiUserLine className="size-5" />
+            <User className="size-5" />
             <span className="font-mono text-xs tracking-wider uppercase">
               Authentication
             </span>
@@ -99,7 +93,7 @@ export function AuthDialog({
         <div className="flex flex-col gap-5 py-2">
           <div className="flex flex-col gap-2.5 rounded-3xl border border-primary/20 bg-primary/5 p-4">
             <div className="flex items-center gap-2 text-xs font-medium text-primary">
-              <RiFlashlightLine className="size-4" />
+              <Zap className="size-4" />
               <span>Instant Test Logins</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -114,9 +108,9 @@ export function AuthDialog({
                 onClick={() => handleDeveloperLogin("aarav")}
               >
                 {loadingDev === "aarav" ? (
-                  <RiLoader4Line className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <RiCodeSSlashLine className="size-4 text-primary" />
+                  <Code2 className="size-4 text-primary" />
                 )}
                 <div className="flex flex-col items-start text-left">
                   <span className="text-xs font-medium">Aarav Sen</span>
@@ -133,9 +127,9 @@ export function AuthDialog({
                 onClick={() => handleDeveloperLogin("maya")}
               >
                 {loadingDev === "maya" ? (
-                  <RiLoader4Line className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <RiUserFollowLine className="size-4 text-amber-600" />
+                  <UserCheck className="size-4 text-amber-600" />
                 )}
                 <div className="flex flex-col items-start text-left">
                   <span className="text-xs font-medium">Maya Lin</span>
@@ -200,7 +194,7 @@ export function AuthDialog({
             >
               {loadingCustom ? (
                 <>
-                  <RiLoader4Line className="size-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   <span>Signing in...</span>
                 </>
               ) : (

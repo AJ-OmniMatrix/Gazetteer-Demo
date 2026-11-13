@@ -4,15 +4,15 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { AnimatePresence, motion } from "motion/react"
 import {
-  RiAddLine,
-  RiCloseLine,
-  RiCompass3Line,
-  RiCrosshair2Line,
-  RiListCheck2,
-  RiLoader4Line,
-  RiMapPin2Line,
-  RiSearchLine,
-} from "@remixicon/react"
+  Compass,
+  Crosshair,
+  ListCheck,
+  Loader2,
+  MapPin,
+  Plus,
+  Search,
+  X,
+} from "lucide-react"
 import { searchPlacesAction } from "@/app/actions"
 import { VisitStatusButton } from "@/components/VisitStatusButton"
 import { Badge } from "@/components/ui/badge"
@@ -218,7 +218,7 @@ export function FloatingDock({
                   nativeButton={false}
                   render={<Link href="/list" prefetch={true} />}
                 >
-                  <RiListCheck2 className="size-5" />
+                  <ListCheck className="size-5" />
                 </Button>
 
                 <motion.div
@@ -232,7 +232,7 @@ export function FloatingDock({
                     aria-expanded={expanded}
                     onClick={() => toggleExpanded(true)}
                   >
-                    <RiAddLine className="size-5" />
+                    <Plus className="size-5" />
                   </Button>
                 </motion.div>
 
@@ -244,7 +244,7 @@ export function FloatingDock({
                   nativeButton={false}
                   render={<Link href="/explore" prefetch={true} />}
                 >
-                  <RiCompass3Line className="size-5" />
+                  <Compass className="size-5" />
                 </Button>
               </motion.div>
             ) : (
@@ -273,7 +273,7 @@ export function FloatingDock({
                     }
                   }}
                 >
-                  <RiMapPin2Line className="size-5" />
+                  <MapPin className="size-5" />
                 </Button>
 
                 <Button
@@ -286,7 +286,7 @@ export function FloatingDock({
                     onSearchOpenChange(true)
                   }}
                 >
-                  <RiSearchLine className="size-5" />
+                  <Search className="size-5" />
                 </Button>
 
                 <motion.div
@@ -300,7 +300,7 @@ export function FloatingDock({
                     aria-label="Close add menu"
                     onClick={() => toggleExpanded(false)}
                   >
-                    <RiCloseLine className="size-5" />
+                    <X className="size-5" />
                   </Button>
                 </motion.div>
               </motion.div>
@@ -334,9 +334,9 @@ export function FloatingDock({
                 disabled={locating}
               >
                 {locating ? (
-                  <RiLoader4Line className="animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <RiCrosshair2Line />
+                  <Crosshair />
                 )}
                 <span>{locating ? "Locating..." : "Use My GPS"}</span>
               </Button>
@@ -442,7 +442,7 @@ export function FloatingDock({
           </DrawerHeader>
           <div className="space-y-3 px-4 pb-4">
             <div className="relative">
-              <RiSearchLine className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={searchTerm}
                 onChange={(e) => {

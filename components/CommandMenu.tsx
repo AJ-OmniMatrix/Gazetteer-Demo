@@ -3,13 +3,13 @@
 import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import {
-  RiCheckLine,
-  RiCompass3Line,
-  RiListCheck2,
-  RiMapPin2Line,
-  RiQuestionLine,
-  RiSearchLine,
-} from "@remixicon/react"
+  Check,
+  Compass,
+  HelpCircle,
+  ListCheck,
+  MapPin,
+  Search,
+} from "lucide-react"
 import {
   Command,
   CommandDialog,
@@ -99,21 +99,21 @@ export function CommandMenu({
               value="action-gps"
               onSelect={() => closeAndRun(onOpenGps)}
             >
-              <RiMapPin2Line />
+              <MapPin />
               <span>Check in via GPS</span>
             </CommandItem>
             <CommandItem
               value="action-search"
               onSelect={() => closeAndRun(onOpenSearch)}
             >
-              <RiSearchLine />
+              <Search />
               <span>Search location to add</span>
             </CommandItem>
             <CommandItem
               value="action-list"
               onSelect={() => closeAndRun(() => router.push("/list"))}
             >
-              <RiListCheck2 />
+              <ListCheck />
               <span>Open Your List</span>
               <CommandShortcut>/list</CommandShortcut>
             </CommandItem>
@@ -121,7 +121,7 @@ export function CommandMenu({
               value="action-explore"
               onSelect={() => closeAndRun(() => router.push("/explore"))}
             >
-              <RiCompass3Line />
+              <Compass />
               <span>Explore Cities</span>
               <CommandShortcut>/explore</CommandShortcut>
             </CommandItem>
@@ -129,7 +129,7 @@ export function CommandMenu({
               value="action-help"
               onSelect={() => closeAndRun(onOpenHelp)}
             >
-              <RiQuestionLine />
+              <HelpCircle />
               <span>Help & Shortcuts</span>
             </CommandItem>
           </CommandGroup>
@@ -143,11 +143,7 @@ export function CommandMenu({
                   value={String(place.id)}
                   onSelect={() => closeAndRun(() => onCheckIn(place))}
                 >
-                  {visited ? (
-                    <RiCheckLine className="text-primary" />
-                  ) : (
-                    <RiMapPin2Line />
-                  )}
+                  {visited ? <Check className="text-primary" /> : <MapPin />}
                   <span className="truncate">{place.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">
                     {place.cityName}

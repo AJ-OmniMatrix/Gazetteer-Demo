@@ -2,12 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import {
-  RiArrowLeftLine,
-  RiCompass3Line,
-  RiExternalLinkLine,
-  RiMapPin2Line,
-} from "@remixicon/react"
+import { ArrowLeft, Compass, ExternalLink, MapPin } from "lucide-react"
 import { motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { VisitStatusButton } from "@/components/VisitStatusButton"
@@ -100,7 +95,7 @@ export function ExploreView() {
           nativeButton={false}
           render={<Link href="/" prefetch={true} />}
         >
-          <RiArrowLeftLine />
+          <ArrowLeft />
           <span>Back to Home</span>
         </Button>
       </section>
@@ -112,7 +107,7 @@ export function ExploreView() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-primary">
-            <RiCompass3Line className="size-4" />
+            <Compass className="size-4" />
             <span className="font-mono text-xs tracking-widest uppercase">
               City Explorer
             </span>
@@ -161,7 +156,7 @@ export function ExploreView() {
           nativeButton={false}
           render={<Link href="/" prefetch={true} />}
         >
-          <RiArrowLeftLine className="size-3.5" />
+          <ArrowLeft className="size-3.5" />
           <span>Featured Spot</span>
         </Button>
       </div>
@@ -270,7 +265,7 @@ export function ExploreView() {
                       />
                     ) : (
                       <div className="flex size-full items-center justify-center text-muted-foreground">
-                        <RiCompass3Line className="size-8 opacity-40" />
+                        <Compass className="size-8 opacity-40" />
                       </div>
                     )}
                     <div className="absolute top-2.5 left-2.5">
@@ -315,9 +310,9 @@ export function ExploreView() {
                       />
                     }
                   >
-                    <RiMapPin2Line className="size-3.5" />
+                    <MapPin className="size-3.5" />
                     <span>Maps</span>
-                    <RiExternalLinkLine className="size-3 opacity-60" />
+                    <ExternalLink className="size-3 opacity-60" />
                   </Button>
 
                   <VisitStatusButton

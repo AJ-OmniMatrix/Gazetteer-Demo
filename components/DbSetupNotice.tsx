@@ -1,11 +1,11 @@
-import { RiDatabase2Line } from "@remixicon/react"
+import { Database } from "lucide-react"
 
 export function DbSetupNotice({ message }: { message: string }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg items-center justify-center px-6">
       <div className="w-full space-y-4 rounded-4xl border bg-card p-6 shadow-xs">
         <div className="flex items-center gap-2.5 text-primary">
-          <RiDatabase2Line className="size-5" />
+          <Database className="size-5" />
           <span className="font-mono text-xs tracking-wider uppercase">
             TiDB Connection Required
           </span>

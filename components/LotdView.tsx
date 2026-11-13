@@ -1,11 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import {
-  RiCompass3Line,
-  RiExternalLinkLine,
-  RiMapPin2Line,
-} from "@remixicon/react"
+import { Compass, ExternalLink, MapPin } from "lucide-react"
 import { motion } from "motion/react"
 import BlurText from "@/components/BlurText"
 import { BlurHashImage } from "@/components/BlurHashImage"
@@ -184,7 +180,7 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             nativeButton={false}
             render={<Link href="/explore" prefetch={true} />}
           >
-            <RiCompass3Line />
+            <Compass />
             <span>Explore Cities</span>
           </Button>
         </div>
@@ -260,9 +256,9 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
               />
             }
           >
-            <RiMapPin2Line />
+            <MapPin />
             <span>Open in Maps</span>
-            <RiExternalLinkLine className="size-3.5 opacity-60" />
+            <ExternalLink className="size-3.5 opacity-60" />
           </Button>
 
           <VisitStatusButton
