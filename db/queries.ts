@@ -1,5 +1,5 @@
-import type { RowDataPacket } from "mysql2"
-import { getPool, withTransaction } from "./index"
+import type { ResultSetHeader, RowDataPacket } from "mysql2"
+import { getPool } from "./index"
 import {
   checkInMemory,
   getMemoryCatalogData,
@@ -42,7 +42,9 @@ function mapPlace(row: RowDataPacket): PlaceSummary {
   }
 }
 
-function groupPhotosByPlaceId(photoRows: RowDataPacket[]): Map<number, PlacePhoto[]> {
+function groupPhotosByPlaceId(
+  photoRows: RowDataPacket[]
+): Map<number, PlacePhoto[]> {
   const map = new Map<number, PlacePhoto[]>()
   for (const p of photoRows) {
     const placeId = Number(p.place_id)
@@ -175,30 +177,13 @@ export async function checkInPlace(
   if (!hasDatabase()) {
     return checkInMemory(userId, placeId, source, idempotencyKey)
   }
-  return withTransaction(async (conn) => {
-    const [byKey] = await conn.execute<RowDataPacket[]>(
-      `SELECT id FROM visits WHERE user_id = ? AND idempotency_key = ? LIMIT 1`,
-      [userId, idempotencyKey]
-    )
-    if (byKey.length > 0) {
-      return { alreadyVisited: true }
-    }
-
-    const [byPlace] = await conn.execute<RowDataPacket[]>(
-      `SELECT id FROM visits WHERE user_id = ? AND place_id = ? LIMIT 1`,
-      [userId, placeId]
-    )
-    if (byPlace.length > 0) {
-      return { alreadyVisited: true }
-    }
-
-    await conn.execute(
-      `INSERT INTO visits (user_id, place_id, source, idempotency_key)
-       VALUES (?, ?, ?, ?)`,
-      [userId, placeId, source, idempotencyKey]
-    )
-    return { alreadyVisited: false }
-  })
+  const pool = getPool()
+  const [result] = await pool.execute<ResultSetHeader>(
+    `INSERT IGNORE INTO visits (user_id, place_id, source, idempotency_key)
+     VALUES (?, ?, ?, ?)`,
+    [userId, placeId, source, idempotencyKey]
+  )
+  return { alreadyVisited: result.affectedRows === 0 }
 }
 
 export async function undoCheckIn(
@@ -209,12 +194,11 @@ export async function undoCheckIn(
     undoCheckInMemory(userId, placeId)
     return
   }
-  await withTransaction(async (conn) => {
-    await conn.execute(
-      `DELETE FROM visits WHERE user_id = ? AND place_id = ?`,
-      [userId, placeId]
-    )
-  })
+  const pool = getPool()
+  await pool.execute(`DELETE FROM visits WHERE user_id = ? AND place_id = ?`, [
+    userId,
+    placeId,
+  ])
 }
 
 export async function getUserVisits(userId: number): Promise<UserVisitItem[]> {
