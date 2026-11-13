@@ -42,6 +42,24 @@ function mapPlace(row: RowDataPacket): PlaceSummary {
   }
 }
 
+function groupPhotosByPlaceId(photoRows: RowDataPacket[]): Map<number, PlacePhoto[]> {
+  const map = new Map<number, PlacePhoto[]>()
+  for (const p of photoRows) {
+    const placeId = Number(p.place_id)
+    const list = map.get(placeId) ?? []
+    list.push({
+      id: Number(p.id),
+      imageUrl: String(p.image_url),
+      blurhash: String(p.blurhash),
+      width: Number(p.width),
+      height: Number(p.height),
+      sortOrder: Number(p.sort_order),
+    })
+    map.set(placeId, list)
+  }
+  return map
+}
+
 export async function getCatalogData(
   currentUser?: User | null
 ): Promise<CatalogPayload> {
@@ -76,20 +94,7 @@ export async function getCatalogData(
     visitedIds = visitRows.map((v) => Number(v.place_id))
   }
 
-  const photosByPlaceId = new Map<number, PlacePhoto[]>()
-  for (const p of photoRows) {
-    const placeId = Number(p.place_id)
-    const list = photosByPlaceId.get(placeId) ?? []
-    list.push({
-      id: Number(p.id),
-      imageUrl: String(p.image_url),
-      blurhash: String(p.blurhash),
-      width: Number(p.width),
-      height: Number(p.height),
-      sortOrder: Number(p.sort_order),
-    })
-    photosByPlaceId.set(placeId, list)
-  }
+  const photosByPlaceId = groupPhotosByPlaceId(photoRows)
 
   const places: PlaceSummary[] = placeRows.map((row) => {
     const summary = mapPlace(row)
@@ -244,20 +249,7 @@ export async function getUserVisits(userId: number): Promise<UserVisitItem[]> {
      ORDER BY place_id ASC, sort_order ASC, id ASC`
   )
 
-  const photosByPlaceId = new Map<number, PlacePhoto[]>()
-  for (const p of photoRows) {
-    const placeId = Number(p.place_id)
-    const list = photosByPlaceId.get(placeId) ?? []
-    list.push({
-      id: Number(p.id),
-      imageUrl: String(p.image_url),
-      blurhash: String(p.blurhash),
-      width: Number(p.width),
-      height: Number(p.height),
-      sortOrder: Number(p.sort_order),
-    })
-    photosByPlaceId.set(placeId, list)
-  }
+  const photosByPlaceId = groupPhotosByPlaceId(photoRows)
 
   return rows.map((row) => {
     const summary = mapPlace(row)

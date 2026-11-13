@@ -43,6 +43,17 @@ function hasDatabase(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim())
 }
 
+function mapUser(row: RowDataPacket): User {
+  return {
+    id: Number(row.id),
+    displayName: String(row.display_name),
+    handle: String(row.handle),
+    avatarUrl: String(row.avatar_url),
+    avatarBlurhash: String(row.avatar_blurhash),
+    isDeveloper: Boolean(row.is_developer),
+  }
+}
+
 export async function getSessionUser(): Promise<User | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE)?.value
@@ -76,15 +87,7 @@ export async function getSessionUser(): Promise<User | null> {
       return null
     }
 
-    const row = rows[0]
-    return {
-      id: Number(row.id),
-      displayName: String(row.display_name),
-      handle: String(row.handle),
-      avatarUrl: String(row.avatar_url),
-      avatarBlurhash: String(row.avatar_blurhash),
-      isDeveloper: Boolean(row.is_developer),
-    }
+    return mapUser(rows[0])
   } catch {
     return null
   }
@@ -164,16 +167,7 @@ export async function developerLogin(handle: string): Promise<User> {
     throw new Error(`Developer account @${handle} not found`)
   }
 
-  const row = rows[0]
-  const user: User = {
-    id: Number(row.id),
-    displayName: String(row.display_name),
-    handle: String(row.handle),
-    avatarUrl: String(row.avatar_url),
-    avatarBlurhash: String(row.avatar_blurhash),
-    isDeveloper: true,
-  }
-
+  const user = mapUser(rows[0])
   await createSession(user.id)
   return user
 }
@@ -224,15 +218,7 @@ export async function loginOrRegister(
   )
 
   if (existingRows.length > 0) {
-    const row = existingRows[0]
-    const user: User = {
-      id: Number(row.id),
-      displayName: String(row.display_name),
-      handle: String(row.handle),
-      avatarUrl: String(row.avatar_url),
-      avatarBlurhash: String(row.avatar_blurhash),
-      isDeveloper: Boolean(row.is_developer),
-    }
+    const user = mapUser(existingRows[0])
     await createSession(user.id)
     return user
   }
@@ -252,16 +238,7 @@ export async function loginOrRegister(
     [handle]
   )
 
-  const row = createdRows[0]
-  const user: User = {
-    id: Number(row.id),
-    displayName: String(row.display_name),
-    handle: String(row.handle),
-    avatarUrl: String(row.avatar_url),
-    avatarBlurhash: String(row.avatar_blurhash),
-    isDeveloper: false,
-  }
-
+  const user = mapUser(createdRows[0])
   await createSession(user.id)
   return user
 }
