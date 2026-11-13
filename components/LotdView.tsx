@@ -158,7 +158,7 @@ function CollageGrid({
 }
 
 export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
-  const { catalog, visitedSet, checkIn, undoCheckIn, isPending } = useCatalog()
+  const { catalog, visitedSet, checkIn, undoCheckIn } = useCatalog()
   const { lotd } = catalog
 
   if (!lotd) {
@@ -269,7 +269,6 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             visited={visited}
             activeLabel="In Your List"
             idleLabel="Add to List"
-            disabled={isPending}
             className="min-h-11 px-5"
             onClick={handleQuickAdd}
           />

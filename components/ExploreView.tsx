@@ -26,7 +26,7 @@ interface CityInfo {
 }
 
 export function ExploreView() {
-  const { catalog, visitedSet, checkIn, undoCheckIn, isPending } = useCatalog()
+  const { catalog, visitedSet, checkIn, undoCheckIn } = useCatalog()
 
   const cities = useMemo(() => {
     const map = new Map<string, CityInfo>()
@@ -325,7 +325,6 @@ export function ExploreView() {
                     activeLabel="Visited"
                     idleLabel="Add"
                     size="sm"
-                    disabled={isPending}
                     className="h-9 px-4 text-xs"
                     onClick={() => {
                       if (visited) {

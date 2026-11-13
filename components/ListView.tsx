@@ -14,7 +14,7 @@ import {
   RiMapPin2Line,
   RiTimeLine,
 } from "@remixicon/react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getUserVisitsAction } from "@/app/actions"
 import { useCatalog } from "@/hooks/use-catalog"
 import { SegmentTree } from "@/lib/ads/segment-tree"
-import { DURATION_ENTER, EASE_OUT } from "@/lib/motion"
+import {
+  DURATION_ENTER,
+  DURATION_EXIT,
+  EASE_IN,
+  EASE_IN_OUT,
+  EASE_OUT,
+} from "@/lib/motion"
 import type { UserVisitItem } from "@/lib/types"
 
 export function ListView({
@@ -344,109 +350,118 @@ export function ListView({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {filteredVisits.map((item, idx) => {
-            const place = item.place
-            const photo = place.primaryPhoto ?? place.photos?.[0]
-            const visitDate = new Date(item.visitedAt).toLocaleDateString(
-              undefined,
-              {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              }
-            )
+          <AnimatePresence mode="popLayout">
+            {filteredVisits.map((item, idx) => {
+              const place = item.place
+              const photo = place.primaryPhoto ?? place.photos?.[0]
+              const visitDate = new Date(item.visitedAt).toLocaleDateString(
+                undefined,
+                {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }
+              )
 
-            return (
-              <motion.article
-                key={item.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: DURATION_ENTER,
-                  ease: EASE_OUT,
-                  delay: Math.min(idx * 0.04, 0.24),
-                }}
-                className="group flex flex-col justify-between rounded-4xl border bg-card p-4 shadow-2xs transition-shadow hover:shadow-xs"
-              >
-                <div className="space-y-3">
-                  <div className="relative aspect-16/10 w-full overflow-hidden rounded-2xl bg-muted">
-                    {photo ? (
-                      <BlurHashImage
-                        src={photo.imageUrl}
-                        blurhash={photo.blurhash}
-                        width={photo.width}
-                        height={photo.height}
-                        alt={place.name}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                        <RiCompass3Line className="size-8 opacity-40" />
+              return (
+                <motion.article
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.95,
+                    transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                  }}
+                  transition={{
+                    duration: DURATION_ENTER,
+                    ease: EASE_OUT,
+                    layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
+                    delay: Math.min(idx * 0.04, 0.24),
+                  }}
+                  className="group flex flex-col justify-between rounded-4xl border bg-card p-4 shadow-2xs transition-shadow hover:shadow-xs"
+                >
+                  <div className="space-y-3">
+                    <div className="relative aspect-16/10 w-full overflow-hidden rounded-2xl bg-muted">
+                      {photo ? (
+                        <BlurHashImage
+                          src={photo.imageUrl}
+                          blurhash={photo.blurhash}
+                          width={photo.width}
+                          height={photo.height}
+                          alt={place.name}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                          <RiCompass3Line className="size-8 opacity-40" />
+                        </div>
+                      )}
+
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className="bg-background/90 text-xs backdrop-blur-md"
+                        >
+                          {place.categoryLabel}
+                        </Badge>
                       </div>
-                    )}
+                    </div>
 
-                    <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
-                      <Badge
-                        variant="secondary"
-                        className="bg-background/90 text-xs backdrop-blur-md"
-                      >
-                        {place.categoryLabel}
-                      </Badge>
+                    <div className="space-y-1 px-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {place.cityName}, {place.countryCode}
+                        </span>
+                        <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums">
+                          <RiTimeLine className="size-3" />
+                          {visitDate}
+                        </span>
+                      </div>
+
+                      <h2 className="font-heading text-xl font-medium tracking-tight text-balance">
+                        {place.name}
+                      </h2>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">
+                        {place.description}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-1 px-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        {place.cityName}, {place.countryCode}
-                      </span>
-                      <span className="flex items-center gap-1 font-mono text-[11px] tabular-nums">
-                        <RiTimeLine className="size-3" />
-                        {visitDate}
-                      </span>
-                    </div>
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/80 pt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-full px-3 text-xs"
+                      nativeButton={false}
+                      render={
+                        <a
+                          href={place.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      }
+                    >
+                      <RiMapPin2Line className="size-3.5" />
+                      <span>Maps</span>
+                      <RiExternalLinkLine className="size-3 opacity-60" />
+                    </Button>
 
-                    <h2 className="font-heading text-xl font-medium tracking-tight text-balance">
-                      {place.name}
-                    </h2>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {place.description}
-                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 rounded-full px-3 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={() => undoCheckIn(place)}
+                    >
+                      <RiDeleteBinLine className="size-3.5" />
+                      <span>Remove</span>
+                    </Button>
                   </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/80 pt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 rounded-full px-3 text-xs"
-                    nativeButton={false}
-                    render={
-                      <a
-                        href={place.mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
-                  >
-                    <RiMapPin2Line className="size-3.5" />
-                    <span>Maps</span>
-                    <RiExternalLinkLine className="size-3 opacity-60" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 rounded-full px-3 text-xs text-muted-foreground hover:text-destructive"
-                    onClick={() => undoCheckIn(place)}
-                  >
-                    <RiDeleteBinLine className="size-3.5" />
-                    <span>Remove</span>
-                  </Button>
-                </div>
-              </motion.article>
-            )
-          })}
+                </motion.article>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
     </section>
