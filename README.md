@@ -77,6 +77,7 @@ npm run db:setup
 - `npm run build`: Build production Next.js application
 - `npm run db:setup`: Initialize TiDB database schema and sync seed data
 - `npm run location:add`: Interactive wizard to add a new location with automatic image and blurhash processing
+- `npm run format`: Format codebase with Prettier
 - `npm run typecheck`: Run TypeScript type checking
 - `npm run lint`: Run ESLint checks
 - `npm test`: Run ADS (Algorithms & Data Structures) test suite
