@@ -8,3 +8,4 @@ export default function ListPage() {
     </ViewTransition>
   )
 }
+

@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next"
+import type { ReactNode } from "react"
 import { EB_Garamond, IBM_Plex_Sans, JetBrains_Mono } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
+import { DbSetupNotice } from "@/components/DbSetupNotice"
+import { GazetteerShell } from "@/components/GazetteerShell"
+import { getCatalogData } from "@/db/queries"
+import { getSessionUser } from "@/lib/auth"
 import "./globals.css"
+
+export const dynamic = "force-dynamic"
 
 const ebGaramondHeading = EB_Garamond({
   subsets: ["latin"],
@@ -30,11 +37,20 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode
 }>) {
+  let data
+  let dbError: string | null = null
+  try {
+    const user = await getSessionUser()
+    data = await getCatalogData(user)
+  } catch (error) {
+    dbError = error instanceof Error ? error.message : "Database error"
+  }
+
   return (
     <html
       lang="en"
@@ -51,7 +67,13 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-dvh bg-background text-foreground selection:bg-primary/15"
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {dbError || !data ? (
+            <DbSetupNotice message={dbError ?? "Database error"} />
+          ) : (
+            <GazetteerShell initialData={data}>{children}</GazetteerShell>
+          )}
+        </ThemeProvider>
       </body>
     </html>
   )
