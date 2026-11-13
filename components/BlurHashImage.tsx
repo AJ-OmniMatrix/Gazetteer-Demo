@@ -5,6 +5,8 @@ import Image from "next/image"
 import { decode } from "blurhash"
 import { cn } from "@/lib/utils"
 
+const blurhashCache = new Map<string, ImageData>()
+
 interface BlurHashImageProps {
   src: string
   alt: string
@@ -35,11 +37,15 @@ export function BlurHashImage({
     const canvas = canvasRef.current
     if (!canvas || !blurhash) return
     try {
-      const pixels = decode(blurhash, 32, 24)
       const ctx = canvas.getContext("2d")
       if (!ctx) return
-      const imageData = ctx.createImageData(32, 24)
-      imageData.data.set(pixels)
+      let imageData = blurhashCache.get(blurhash)
+      if (!imageData) {
+        const pixels = decode(blurhash, 8, 6)
+        imageData = ctx.createImageData(8, 6)
+        imageData.data.set(pixels)
+        blurhashCache.set(blurhash, imageData)
+      }
       ctx.putImageData(imageData, 0, 0)
     } catch {}
   }, [blurhash])
@@ -56,8 +62,8 @@ export function BlurHashImage({
       <div className={cn(fill ? "absolute inset-0" : "relative size-full")}>
         <canvas
           ref={canvasRef}
-          width={32}
-          height={24}
+          width={8}
+          height={6}
           aria-hidden="true"
           className="absolute inset-0 size-full object-cover"
         />

@@ -98,7 +98,7 @@ export function ExploreView() {
           variant="outline"
           className="min-h-11 rounded-full px-5"
           nativeButton={false}
-          render={<Link href="/" />}
+          render={<Link href="/" prefetch={true} />}
         >
           <RiArrowLeftLine />
           <span>Back to Home</span>
@@ -159,7 +159,7 @@ export function ExploreView() {
           size="sm"
           className="h-9 self-start rounded-full px-4 text-xs sm:self-end"
           nativeButton={false}
-          render={<Link href="/" />}
+          render={<Link href="/" prefetch={true} />}
         >
           <RiArrowLeftLine className="size-3.5" />
           <span>Featured Spot</span>
@@ -243,7 +243,7 @@ export function ExploreView() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPlaces.map((place) => {
+          {filteredPlaces.map((place, index) => {
             const visited = visitedSet.has(place.id)
             const photo = place.primaryPhoto
 
@@ -265,6 +265,7 @@ export function ExploreView() {
                         width={photo.width}
                         height={photo.height}
                         fill
+                        loading={index < 6 ? "eager" : "lazy"}
                         className="size-full object-cover"
                       />
                     ) : (
