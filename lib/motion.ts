@@ -6,9 +6,3 @@ export const DURATION_ENTER = 0.22
 export const DURATION_EXIT = 0.17
 export const ROW_STAGGER = 0.03
 export const MAX_ROW_STAGGER = 0.24
-
-export const GSAP_EASE_OUT = "power3.out"
-export const GSAP_BOUNCE_ENTER = "back.out(1.9)"
-
-export const DURATION_HOVER_ENTER = 0.42
-export const DURATION_HOVER_EXIT = 0.34
