@@ -9,6 +9,7 @@ import { CommandMenu } from "@/components/CommandMenu"
 import { FloatingDock } from "@/components/FloatingDock"
 import { TopRightPill } from "@/components/TopRightPill"
 import { ScrollReveal } from "@/components/ScrollReveal"
+import { AuthProvider } from "@/components/auth-context"
 import { useCatalog } from "@/hooks/use-catalog"
 import type { CatalogPayload } from "@/lib/types"
 
@@ -20,7 +21,8 @@ interface GazetteerShellProps {
 function InnerShell({ initialData, children }: GazetteerShellProps) {
   const pathname = usePathname()
   const fitViewport = pathname === "/"
-  const { catalog, visitedSet, checkIn } = useCatalog(initialData)
+  const { catalog, visitedSet, checkIn, logout, openAuth } =
+    useCatalog(initialData)
   const [commandOpen, setCommandOpen] = useState(false)
   const [gpsOpen, setGpsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -35,6 +37,8 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         helpOpen={helpOpen}
         onHelpOpenChange={setHelpOpen}
         onOpenCommand={() => setCommandOpen(true)}
+        onOpenAuth={() => openAuth()}
+        onLogout={logout}
       />
 
       <ScrollReveal
@@ -94,7 +98,13 @@ export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <InnerShell initialData={initialData}>{children}</InnerShell>
+      <AuthProvider
+        onAuthSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["catalog"] })
+        }
+      >
+        <InnerShell initialData={initialData}>{children}</InnerShell>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }

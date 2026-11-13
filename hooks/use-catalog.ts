@@ -3,7 +3,8 @@
 import { useMemo } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { checkInAction, undoCheckInAction } from "@/app/actions"
+import { checkInAction, logoutAction, undoCheckInAction } from "@/app/actions"
+import { useAuth } from "@/components/auth-context"
 import type { CatalogPayload, PlaceSummary, VisitSource } from "@/lib/types"
 
 async function fetchCatalog(): Promise<CatalogPayload> {
@@ -16,6 +17,7 @@ async function fetchCatalog(): Promise<CatalogPayload> {
 
 export function useCatalog(initialData?: CatalogPayload) {
   const queryClient = useQueryClient()
+  const { openAuth } = useAuth()
   const seedData =
     initialData ?? queryClient.getQueryData<CatalogPayload>(["catalog"])
 
@@ -126,12 +128,36 @@ export function useCatalog(initialData?: CatalogPayload) {
     },
   })
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await logoutAction()
+    },
+    onSuccess: () => {
+      toast.info("Signed out")
+      queryClient.invalidateQueries({ queryKey: ["catalog"] })
+    },
+  })
+
   const checkIn = (place: PlaceSummary, source: VisitSource) => {
+    const user = query.data?.user ?? seedData?.user
+    if (!user) {
+      openAuth("Sign in to save this place to your travel list")
+      return
+    }
     checkInMutation.mutate({
       place,
       source,
       idempotencyKey: crypto.randomUUID(),
     })
+  }
+
+  const undoCheckIn = (place: PlaceSummary) => {
+    const user = query.data?.user ?? seedData?.user
+    if (!user) {
+      openAuth("Sign in to manage your travel list")
+      return
+    }
+    undoMutation.mutate(place)
   }
 
   const catalog = query.data ?? seedData
@@ -143,7 +169,9 @@ export function useCatalog(initialData?: CatalogPayload) {
     catalog,
     visitedSet,
     checkIn,
-    undoCheckIn: (place: PlaceSummary) => undoMutation.mutate(place),
+    undoCheckIn,
+    logout: () => logoutMutation.mutate(),
+    openAuth,
     isPending: checkInMutation.isPending || undoMutation.isPending,
   }
 }

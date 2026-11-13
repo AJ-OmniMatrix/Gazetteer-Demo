@@ -2,13 +2,15 @@ import type { ReactNode } from "react"
 import { DbSetupNotice } from "@/components/DbSetupNotice"
 import { GazetteerShell } from "@/components/GazetteerShell"
 import { getCatalogData } from "@/db/queries"
+import { getSessionUser } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   let data
   try {
-    data = await getCatalogData()
+    const user = await getSessionUser()
+    data = await getCatalogData(user)
   } catch (error) {
     return (
       <DbSetupNotice
@@ -19,4 +21,3 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return <GazetteerShell initialData={data}>{children}</GazetteerShell>
 }
-

@@ -4,6 +4,8 @@ import Link from "next/link"
 import {
   RiCompass3Line,
   RiListCheck2,
+  RiLoginBoxLine,
+  RiLogoutBoxRLine,
   RiQuestionLine,
   RiSearchLine,
   RiUserLine,
@@ -28,15 +30,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Kbd, KbdGroup } from "@/components/ui/kbd"
-import type { DemoUser } from "@/lib/types"
+import type { User } from "@/lib/types"
 
 interface TopRightPillProps {
-  user: DemoUser
+  user: User | null
   mode: "tidb" | "memory"
   visitedCount: number
   helpOpen: boolean
   onHelpOpenChange: (open: boolean) => void
   onOpenCommand: () => void
+  onOpenAuth: () => void
+  onLogout: () => void
 }
 
 export function TopRightPill({
@@ -46,13 +50,17 @@ export function TopRightPill({
   helpOpen,
   onHelpOpenChange,
   onOpenCommand,
+  onOpenAuth,
+  onLogout,
 }: TopRightPillProps) {
-  const initials = user.displayName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
+  const initials = user
+    ? user.displayName
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "G"
 
   return (
     <>
@@ -60,56 +68,83 @@ export function TopRightPill({
         style={{ viewTransitionName: "top-right-pill" }}
         className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md"
       >
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-10 rounded-full p-0"
-                aria-label="Open traveler profile"
-              />
-            }
+        {user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-10 rounded-full p-0"
+                  aria-label="Open traveler profile"
+                />
+              }
+            >
+              <Avatar className="size-8">
+                <AvatarImage src={user.avatarUrl} alt={user.displayName} />
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="flex flex-col gap-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground">
+                      {user.displayName}
+                    </span>
+                    {user.isDeveloper && (
+                      <span className="py-0.2 rounded bg-primary/15 px-1 font-mono text-[9px] font-semibold text-primary uppercase">
+                        Dev
+                      </span>
+                    )}
+                  </div>
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                    @{user.handle} · {visitedCount} visited
+                  </span>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/list" />}>
+                <RiListCheck2 />
+                <span>Your List</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href="/explore" />}>
+                <RiCompass3Line />
+                <span>Explore Cities</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onOpenCommand}>
+                <RiSearchLine />
+                <span>Command Palette</span>
+                <DropdownMenuShortcut>Ctrl K</DropdownMenuShortcut>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled>
+                <RiUserLine />
+                <span>
+                  {mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onLogout}
+                className="text-destructive focus:text-destructive"
+              >
+                <RiLogoutBoxRLine />
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-10 gap-1.5 rounded-full px-3 text-xs font-medium"
+            onClick={onOpenAuth}
           >
-            <Avatar className="size-8">
-              <AvatarImage src={user.avatarUrl} alt={user.displayName} />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-56">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="flex flex-col gap-0.5">
-                <span className="font-medium text-foreground">
-                  {user.displayName}
-                </span>
-                <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                  @{user.handle} · {visitedCount} visited
-                </span>
-              </DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/list" />}>
-              <RiListCheck2 />
-              <span>Your List</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/explore" />}>
-              <RiCompass3Line />
-              <span>Explore Cities</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onOpenCommand}>
-              <RiSearchLine />
-              <span>Command Palette</span>
-              <DropdownMenuShortcut>Ctrl K</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>
-              <RiUserLine />
-              <span>
-                {mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}
-              </span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <RiLoginBoxLine className="size-4 text-primary" />
+            <span>Sign In</span>
+          </Button>
+        )}
 
         <Button
           variant="ghost"
