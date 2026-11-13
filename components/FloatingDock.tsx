@@ -216,7 +216,7 @@ export function FloatingDock({
                   className="size-11 rounded-full"
                   aria-label="Travel list"
                   nativeButton={false}
-                  render={<Link href="/list" />}
+                  render={<Link href="/list" prefetch={true} />}
                 >
                   <RiListCheck2 className="size-5" />
                 </Button>
@@ -242,7 +242,7 @@ export function FloatingDock({
                   className="size-11 rounded-full"
                   aria-label="Explore places"
                   nativeButton={false}
-                  render={<Link href="/explore" />}
+                  render={<Link href="/explore" prefetch={true} />}
                 >
                   <RiCompass3Line className="size-5" />
                 </Button>

@@ -182,7 +182,7 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             variant="default"
             className="h-11 rounded-full px-5"
             nativeButton={false}
-            render={<Link href="/explore" />}
+            render={<Link href="/explore" prefetch={true} />}
           >
             <RiCompass3Line />
             <span>Explore Cities</span>
