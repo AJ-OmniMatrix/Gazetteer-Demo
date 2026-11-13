@@ -24,7 +24,10 @@ function toUnitVec(p: GeoPoint): [number, number, number] {
   return [cosLat * Math.cos(lng), cosLat * Math.sin(lng), Math.sin(lat)]
 }
 
-function sqDist(a: [number, number, number], b: [number, number, number]): number {
+function sqDist(
+  a: [number, number, number],
+  b: [number, number, number]
+): number {
   const dx = a[0] - b[0]
   const dy = a[1] - b[1]
   const dz = a[2] - b[2]

@@ -20,7 +20,9 @@ export function createPool(multipleStatements = false): Pool {
     connectionLimit: 5,
     waitForConnections: true,
     multipleStatements,
-    ...(needsSsl ? { ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true } } : {}),
+    ...(needsSsl
+      ? { ssl: { minVersion: "TLSv1.2", rejectUnauthorized: true } }
+      : {}),
   })
 }
 
@@ -47,4 +49,3 @@ export async function withTransaction<T>(
     conn.release()
   }
 }
-

@@ -53,4 +53,3 @@ export class PrefixTrie<T> {
     return node.items.slice(0, limit)
   }
 }
-

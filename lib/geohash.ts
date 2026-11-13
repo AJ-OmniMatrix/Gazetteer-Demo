@@ -40,4 +40,3 @@ export function encodeGeohash(lat: number, lng: number, precision = 7): string {
 
   return hash
 }
-
