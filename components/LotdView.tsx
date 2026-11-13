@@ -131,22 +131,24 @@ function CollageGrid({
             ease: EASE_OUT,
             delay: Math.min(index * ROW_STAGGER, 0.2),
           }}
-          whileHover={{ scale: 1.015 }}
           className={cn(
-            "relative min-h-0 min-w-0 transition-transform",
+            "group relative min-h-0 min-w-0",
             getTileClasses(tileCount, layoutSeed, index)
           )}
         >
-          <BlurHashImage
-            src={photo.imageUrl}
-            alt={`${placeName} view ${index + 1}`}
-            blurhash={photo.blurhash}
-            width={photo.width}
-            height={photo.height}
-            fill
-            loading="eager"
-            className="size-full rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
-          />
+          <div className="size-full transition-transform duration-200 ease-out group-hover:scale-[0.98] group-active:scale-[0.96] motion-reduce:transform-none">
+            <BlurHashImage
+              src={photo.imageUrl}
+              alt={`${placeName} view ${index + 1}`}
+              blurhash={photo.blurhash}
+              width={photo.width}
+              height={photo.height}
+              fill
+              loading="eager"
+              imgClassName="transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transform-none"
+              className="size-full rounded-2xl border border-border/60 shadow-xs sm:rounded-3xl"
+            />
+          </div>
         </motion.div>
       ))}
     </div>
