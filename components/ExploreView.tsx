@@ -330,7 +330,7 @@ export function ExploreView() {
                       if (visited) {
                         undoCheckIn(place)
                       } else {
-                        checkIn(place, "search")
+                        checkIn(place, "explore")
                       }
                     }}
                   />
