@@ -212,12 +212,13 @@ export function FloatingDock({
               >
                 <Button
                   variant="ghost"
-                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  aria-label="Travel list"
                   nativeButton={false}
                   render={<Link href="/list" />}
                 >
-                  <RiListCheck2 />
-                  <span>List</span>
+                  <RiListCheck2 className="size-5" />
                 </Button>
 
                 <motion.div
@@ -237,12 +238,13 @@ export function FloatingDock({
 
                 <Button
                   variant="ghost"
-                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  aria-label="Explore places"
                   nativeButton={false}
                   render={<Link href="/explore" />}
                 >
-                  <RiCompass3Line />
-                  <span>Explore</span>
+                  <RiCompass3Line className="size-5" />
                 </Button>
               </motion.div>
             ) : (
@@ -260,7 +262,9 @@ export function FloatingDock({
               >
                 <Button
                   variant="secondary"
-                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  aria-label="Check in with GPS"
                   onClick={() => {
                     setExpanded(false)
                     onGpsOpenChange(true)
@@ -269,20 +273,20 @@ export function FloatingDock({
                     }
                   }}
                 >
-                  <RiMapPin2Line />
-                  <span>GPS</span>
+                  <RiMapPin2Line className="size-5" />
                 </Button>
 
                 <Button
                   variant="secondary"
-                  className="h-11 rounded-full px-4 text-sm font-medium"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  aria-label="Search places"
                   onClick={() => {
                     setExpanded(false)
                     onSearchOpenChange(true)
                   }}
                 >
-                  <RiSearchLine />
-                  <span>Search</span>
+                  <RiSearchLine className="size-5" />
                 </Button>
 
                 <motion.div
