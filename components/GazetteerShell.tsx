@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
 import { Toaster } from "@/components/ui/sonner"
-import { CommandMenu } from "@/components/CommandMenu"
 import { FloatingDock } from "@/components/FloatingDock"
 import { TopRightPill } from "@/components/TopRightPill"
 import { ScrollReveal } from "@/components/ScrollReveal"
@@ -23,7 +22,6 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
   const fitViewport = pathname === "/"
   const { catalog, visitedSet, checkIn, logout, openAuth } =
     useCatalog(initialData)
-  const [commandOpen, setCommandOpen] = useState(false)
   const [gpsOpen, setGpsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
@@ -36,14 +34,13 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         visitedCount={visitedSet.size}
         helpOpen={helpOpen}
         onHelpOpenChange={setHelpOpen}
-        onOpenCommand={() => setCommandOpen(true)}
         onOpenAuth={() => openAuth()}
         onLogout={logout}
       />
 
       <ScrollReveal
         fitViewport={fitViewport}
-        disabled={commandOpen || gpsOpen || searchOpen || helpOpen}
+        disabled={gpsOpen || searchOpen || helpOpen}
         dock={
           <FloatingDock
             places={catalog.places}
@@ -66,17 +63,6 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
           {children}
         </main>
       </ScrollReveal>
-
-      <CommandMenu
-        open={commandOpen}
-        onOpenChange={setCommandOpen}
-        places={catalog.places}
-        visitedSet={visitedSet}
-        onOpenGps={() => setGpsOpen(true)}
-        onOpenSearch={() => setSearchOpen(true)}
-        onOpenHelp={() => setHelpOpen(true)}
-        onCheckIn={(place) => checkIn(place, "search")}
-      />
 
       <Toaster position="top-center" />
     </MotionConfig>

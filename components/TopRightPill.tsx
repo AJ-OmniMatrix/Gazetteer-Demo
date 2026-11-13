@@ -7,7 +7,6 @@ import {
   ListCheck,
   LogIn,
   LogOut,
-  Search,
   User as UserIcon,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -26,10 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Kbd, KbdGroup } from "@/components/ui/kbd"
 import type { User } from "@/lib/types"
 
 interface TopRightPillProps {
@@ -38,7 +35,6 @@ interface TopRightPillProps {
   visitedCount: number
   helpOpen: boolean
   onHelpOpenChange: (open: boolean) => void
-  onOpenCommand: () => void
   onOpenAuth: () => void
   onLogout: () => void
 }
@@ -49,7 +45,6 @@ export function TopRightPill({
   visitedCount,
   helpOpen,
   onHelpOpenChange,
-  onOpenCommand,
   onOpenAuth,
   onLogout,
 }: TopRightPillProps) {
@@ -111,11 +106,6 @@ export function TopRightPill({
               <DropdownMenuItem render={<Link href="/explore" />}>
                 <Compass />
                 <span>Explore Cities</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onOpenCommand}>
-                <Search />
-                <span>Command Palette</span>
-                <DropdownMenuShortcut>Ctrl K</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled>
@@ -185,13 +175,6 @@ export function TopRightPill({
                   search.
                 </p>
               </div>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border bg-muted/40 p-3">
-              <span className="font-medium">Command Menu</span>
-              <KbdGroup>
-                <Kbd>Ctrl</Kbd>
-                <Kbd>K</Kbd>
-              </KbdGroup>
             </div>
           </div>
         </DialogContent>
