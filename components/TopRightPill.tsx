@@ -63,6 +63,16 @@ export function TopRightPill({
         style={{ viewTransitionName: "top-right-pill" }}
         className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md"
       >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-10 rounded-full"
+          aria-label="Help and quick guide"
+          onClick={() => onHelpOpenChange(true)}
+        >
+          <HelpCircle className="size-5" />
+        </Button>
+
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -135,16 +145,6 @@ export function TopRightPill({
             <span>Sign In</span>
           </Button>
         )}
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-10 rounded-full"
-          aria-label="Help and keyboard shortcuts"
-          onClick={() => onHelpOpenChange(true)}
-        >
-          <HelpCircle className="size-5" />
-        </Button>
       </div>
 
       <Dialog open={helpOpen} onOpenChange={onHelpOpenChange}>
