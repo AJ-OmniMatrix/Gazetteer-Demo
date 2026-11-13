@@ -2,6 +2,7 @@ import test from "node:test"
 import assert from "node:assert/strict"
 import { PrefixTrie } from "./trie"
 import { GeoKDTree, haversineKm } from "./kd-tree"
+import { SegmentTree } from "./segment-tree"
 import { encodeGeohash } from "../geohash"
 
 test("PrefixTrie matches full phrases and word tokens", () => {
@@ -56,4 +57,17 @@ test("encodeGeohash returns deterministic precision-7 prefix", () => {
   const kyotoStation = encodeGeohash(34.9858, 135.7588, 7)
   assert.equal(fushimi, "xn0wctd")
   assert.equal(kyotoStation.slice(0, 3), fushimi.slice(0, 3))
+})
+
+test("SegmentTree builds, queries ranges, and updates values", () => {
+  const data = [1, 3, 5, 7, 9, 11]
+  const tree = SegmentTree.fromArray(data)
+
+  assert.equal(tree.query(0, 2), 9)
+  assert.equal(tree.query(1, 4), 24)
+  assert.equal(tree.query(0, 5), 36)
+
+  tree.update(2, 3)
+  assert.equal(tree.query(0, 2), 12)
+  assert.equal(tree.query(0, 5), 39)
 })
