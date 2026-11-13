@@ -23,15 +23,22 @@ import { getUserVisitsAction } from "@/app/actions"
 import { useCatalog } from "@/hooks/use-catalog"
 import { SegmentTree } from "@/lib/ads/segment-tree"
 import { DURATION_ENTER, EASE_OUT } from "@/lib/motion"
+import type { UserVisitItem } from "@/lib/types"
 
-export function ListView() {
+export function ListView({
+  initialVisits = [],
+}: {
+  initialVisits?: UserVisitItem[]
+}) {
   const { catalog, undoCheckIn, openAuth } = useCatalog()
   const user = catalog.user
 
-  const { data: visits = [], isLoading } = useQuery({
+  const { data: visits = initialVisits, isLoading } = useQuery({
     queryKey: ["user-visits", user?.id],
     queryFn: () => getUserVisitsAction(),
     enabled: Boolean(user?.id),
+    initialData: initialVisits.length > 0 ? initialVisits : undefined,
+    staleTime: 30_000,
   })
 
   const [selectedCity, setSelectedCity] = useState<string>("all")
@@ -148,7 +155,7 @@ export function ListView() {
             variant="outline"
             className="min-h-11 rounded-full px-5"
             nativeButton={false}
-            render={<Link href="/explore" />}
+            render={<Link href="/explore" prefetch={true} />}
           >
             <RiCompass3Line />
             <span>Explore Cities</span>
@@ -182,7 +189,7 @@ export function ListView() {
             size="sm"
             className="h-9 rounded-full px-3.5 text-xs"
             nativeButton={false}
-            render={<Link href="/explore" />}
+            render={<Link href="/explore" prefetch={true} />}
           >
             <RiCompass3Line className="size-4 text-primary" />
             <span>Explore Cities</span>
@@ -192,7 +199,7 @@ export function ListView() {
             size="sm"
             className="h-9 rounded-full px-3 text-xs"
             nativeButton={false}
-            render={<Link href="/" />}
+            render={<Link href="/" prefetch={true} />}
           >
             <RiArrowLeftLine className="size-4" />
             <span>LOTD</span>
