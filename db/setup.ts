@@ -35,6 +35,10 @@ async function main() {
       )
     } catch {}
 
+    try {
+      await pool.query("ALTER TABLE places DROP COLUMN featured_date")
+    } catch {}
+
     for (const user of SEED_USERS) {
       await pool.execute(
         `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash, is_developer)
@@ -146,8 +150,8 @@ async function main() {
 
       await pool.execute(
         `INSERT INTO places
-           (city_id, category_id, name, slug, description, lat, lng, geohash, maps_url, featured_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (city_id, category_id, name, slug, description, lat, lng, geohash, maps_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            city_id = VALUES(city_id),
            category_id = VALUES(category_id),
@@ -156,8 +160,7 @@ async function main() {
            lat = VALUES(lat),
            lng = VALUES(lng),
            geohash = VALUES(geohash),
-           maps_url = VALUES(maps_url),
-           featured_date = VALUES(featured_date)`,
+           maps_url = VALUES(maps_url)`,
         [
           cityId,
           categoryId,
@@ -168,7 +171,6 @@ async function main() {
           place.lng,
           place.geohash,
           place.mapsUrl,
-          place.featuredDate,
         ]
       )
 
@@ -195,6 +197,42 @@ async function main() {
           ]
         )
       }
+    }
+
+    await pool.execute("DELETE FROM location_of_the_day")
+    for (const place of SEED_PLACES) {
+      if (place.featuredDate) {
+        const [placeRows] = await pool.execute<RowDataPacket[]>(
+          "SELECT id FROM places WHERE slug = ? LIMIT 1",
+          [place.slug]
+        )
+        if (placeRows.length > 0) {
+          await pool.execute(
+            `INSERT INTO location_of_the_day (place_id, featured_date)
+             VALUES (?, ?)
+             ON DUPLICATE KEY UPDATE place_id = VALUES(place_id)`,
+            [Number(placeRows[0].id), place.featuredDate]
+          )
+        }
+      }
+    }
+
+    const validCityNames = SEED_CITIES.map((c) => c.name)
+    if (validCityNames.length > 0) {
+      const ph = validCityNames.map(() => "?").join(",")
+      await pool.execute(
+        `DELETE FROM cities WHERE name NOT IN (${ph}) AND id NOT IN (SELECT DISTINCT city_id FROM places)`,
+        validCityNames
+      )
+    }
+
+    const validCountryCodes = SEED_COUNTRIES.map((c) => c.code)
+    if (validCountryCodes.length > 0) {
+      const ph = validCountryCodes.map(() => "?").join(",")
+      await pool.execute(
+        `DELETE FROM countries WHERE code NOT IN (${ph}) AND code NOT IN (SELECT DISTINCT country_code FROM cities)`,
+        validCountryCodes
+      )
     }
 
     console.log(`Seeded ${SEED_PLACES.length} places cleanly.`)

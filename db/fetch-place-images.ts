@@ -104,7 +104,10 @@ async function main() {
   const targetPlaces = RAW_PLACES.filter((p) => {
     if (targetSlug) return p.slug === targetSlug
     if (forceAll) return true
-    return p.photos.some((ph) => ph.imageUrl.includes("/images/places/inari-"))
+    return (
+      p.photos.length === 0 ||
+      p.photos.some((ph) => ph.imageUrl.includes("/images/places/inari-"))
+    )
   })
 
   if (targetPlaces.length === 0) {
@@ -122,8 +125,18 @@ async function main() {
       `[${i + 1}/${targetPlaces.length}] Fetching for "${place.name}" (${place.city})...`
     )
 
-    const query = `${place.name} ${place.city}`
-    const candidates = await searchPlaceImages(query, maxPhotosPerPlace + 2)
+    const queries = [
+      `${place.name} ${place.city}`,
+      place.name,
+      `${place.name.split(" ").slice(0, 2).join(" ")} ${place.city}`,
+    ]
+    let candidates = await searchPlaceImages(queries[0], maxPhotosPerPlace + 2)
+    if (candidates.length === 0 && queries[1]) {
+      candidates = await searchPlaceImages(queries[1], maxPhotosPerPlace + 2)
+    }
+    if (candidates.length === 0 && queries[2]) {
+      candidates = await searchPlaceImages(queries[2], maxPhotosPerPlace + 2)
+    }
     const placeDir = path.join(
       process.cwd(),
       "public",

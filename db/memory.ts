@@ -249,3 +249,12 @@ export function getUserVisitsMemory(userId: number): UserVisitItem[] {
     })
     .filter((item): item is UserVisitItem => item !== null)
 }
+
+export function addPlaceMemory(place: PlaceSummary): void {
+  const existingIdx = MEMORY_PLACES.findIndex((p) => p.slug === place.slug)
+  if (existingIdx >= 0) {
+    MEMORY_PLACES[existingIdx] = place
+  } else {
+    MEMORY_PLACES.push(place)
+  }
+}

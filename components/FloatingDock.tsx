@@ -13,8 +13,10 @@ import {
   MapPin,
   Plus,
   Search,
+  Sparkles,
 } from "lucide-react"
 import { searchPlacesAction } from "@/app/actions"
+import { AddLocationDialog } from "@/components/AddLocationDialog"
 import { VisitStatusButton } from "@/components/VisitStatusButton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -183,6 +185,7 @@ export function FloatingDock({
   })
   const [locating, setLocating] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
+  const [addLocationOpen, setAddLocationOpen] = useState(false)
 
   const [searchTerm, setSearchTerm] = useState("")
   const [serverHits, setServerHits] = useState<PlaceSummary[]>([])
@@ -411,31 +414,57 @@ export function FloatingDock({
                 </Button>
               </motion.div>
             ) : (
-              <motion.div
-                key="gps"
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{
-                  opacity: 0,
-                  scale: 0.92,
-                  transition: { duration: DURATION_EXIT, ease: EASE_IN },
-                }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-              >
-                <Button
-                  variant="secondary"
-                  size="icon-lg"
-                  className="size-11 rounded-full"
-                  aria-label="Check in with GPS"
-                  onClick={() => {
-                    setExpanded(false)
-                    onGpsOpenChange(true)
-                    detectLocation()
+              <div className="flex items-center gap-1.5">
+                <motion.div
+                  key="gps"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.92,
+                    transition: { duration: DURATION_EXIT, ease: EASE_IN },
                   }}
+                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
                 >
-                  <MapPin className="size-5" />
-                </Button>
-              </motion.div>
+                  <Button
+                    variant="secondary"
+                    size="icon-lg"
+                    className="size-11 rounded-full"
+                    aria-label="Check in with GPS"
+                    onClick={() => {
+                      setExpanded(false)
+                      onGpsOpenChange(true)
+                      detectLocation()
+                    }}
+                  >
+                    <MapPin className="size-5" />
+                  </Button>
+                </motion.div>
+                <motion.div
+                  key="add-location"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.92,
+                    transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                  }}
+                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                >
+                  <Button
+                    variant="secondary"
+                    size="icon-lg"
+                    className="size-11 rounded-full text-primary hover:text-primary"
+                    aria-label="Add new location"
+                    onClick={() => {
+                      setExpanded(false)
+                      setAddLocationOpen(true)
+                    }}
+                  >
+                    <Sparkles className="size-5" />
+                  </Button>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
 
@@ -733,9 +762,25 @@ export function FloatingDock({
 
             <div className="max-h-72 space-y-2 overflow-y-auto overscroll-y-contain">
               {searchResults.length === 0 && (
-                <p className="py-6 text-center text-sm text-muted-foreground">
-                  {searching ? "Searching..." : "No matching places found."}
-                </p>
+                <div className="space-y-3 py-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {searching ? "Searching..." : "No matching places found."}
+                  </p>
+                  {!searching && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        onSearchOpenChange(false)
+                        setAddLocationOpen(true)
+                      }}
+                      className="gap-1.5 text-xs"
+                    >
+                      <Sparkles className="size-3.5 text-primary" />
+                      Add a new place to catalog
+                    </Button>
+                  )}
+                </div>
               )}
               <AnimatePresence initial={false}>
                 {searchResults.map((place, index) => (
@@ -780,9 +825,30 @@ export function FloatingDock({
                 ))}
               </AnimatePresence>
             </div>
+            {searchResults.length > 0 && (
+              <div className="pt-2 text-center">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    onSearchOpenChange(false)
+                    setAddLocationOpen(true)
+                  }}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <Sparkles className="size-3.5 text-primary" />
+                  Can&apos;t find a place? Add location
+                </Button>
+              </div>
+            )}
           </div>
         </DrawerContent>
       </Drawer>
+
+      <AddLocationDialog
+        open={addLocationOpen}
+        onOpenChange={setAddLocationOpen}
+      />
     </>
   )
 }

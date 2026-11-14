@@ -328,12 +328,10 @@ export const SEED_PLACES = RAW_PLACES.map((p) => {
 
       const geohash = encodeGeohash(lat, lng, 7)
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      const featuredDate = new Date().toISOString().slice(0, 10)
-
       await pool.execute(
         `INSERT INTO places
-           (city_id, category_id, name, slug, description, lat, lng, geohash, maps_url, featured_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (city_id, category_id, name, slug, description, lat, lng, geohash, maps_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            city_id = VALUES(city_id),
            category_id = VALUES(category_id),
@@ -342,8 +340,7 @@ export const SEED_PLACES = RAW_PLACES.map((p) => {
            lat = VALUES(lat),
            lng = VALUES(lng),
            geohash = VALUES(geohash),
-           maps_url = VALUES(maps_url),
-           featured_date = VALUES(featured_date)`,
+           maps_url = VALUES(maps_url)`,
         [
           cityId,
           categoryId,
@@ -354,7 +351,6 @@ export const SEED_PLACES = RAW_PLACES.map((p) => {
           lng,
           geohash,
           mapsUrl,
-          featuredDate,
         ]
       )
 
