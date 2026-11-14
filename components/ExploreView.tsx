@@ -48,11 +48,6 @@ export function ExploreView() {
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
-  const activeCity =
-    selectedCity !== "all"
-      ? (cities.find((c) => c.cityName === selectedCity) ?? null)
-      : null
-
   const basePlaces =
     selectedCity === "all"
       ? catalog.places
@@ -70,8 +65,6 @@ export function ExploreView() {
     selectedCategory === "all"
       ? basePlaces
       : basePlaces.filter((p) => p.categorySlug === selectedCategory)
-
-  const visitedInScope = basePlaces.filter((p) => visitedSet.has(p.id)).length
 
   if (catalog.places.length === 0) {
     return (
@@ -104,62 +97,26 @@ export function ExploreView() {
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-primary">
-            <Compass className="size-4" />
-            <span className="font-mono text-xs tracking-widest uppercase">
-              City Explorer
-            </span>
-          </div>
-          <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            {activeCity ? `Visiting ${activeCity.cityName}` : "All Cities"}
+          <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+            Explore Cities
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {activeCity ? (
-              <>
-                {activeCity.countryName} ({activeCity.countryCode}) ·{" "}
-                <span className="font-mono tabular-nums">
-                  {activeCity.lat.toFixed(4)}°, {activeCity.lng.toFixed(4)}°
-                </span>
-                {" · "}
-                <span className="font-mono font-medium text-foreground tabular-nums">
-                  {visitedInScope}
-                </span>{" "}
-                of{" "}
-                <span className="font-mono tabular-nums">
-                  {basePlaces.length}
-                </span>{" "}
-                visited
-              </>
-            ) : (
-              <>
-                Browse all catalogued places across {cities.length}{" "}
-                {cities.length === 1 ? "city" : "cities"} (
-                <span className="font-mono font-medium text-foreground tabular-nums">
-                  {visitedInScope}
-                </span>{" "}
-                of{" "}
-                <span className="font-mono tabular-nums">
-                  {basePlaces.length}
-                </span>{" "}
-                visited)
-              </>
-            )}
-          </p>
         </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 self-start rounded-full px-4 text-xs sm:self-end"
-          nativeButton={false}
-          render={<Link href="/" prefetch={true} />}
-        >
-          <ArrowLeft className="size-3.5" />
-          <span>Location of the Day</span>
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 rounded-full px-3 text-xs"
+            nativeButton={false}
+            render={<Link href="/" prefetch={true} />}
+          >
+            <ArrowLeft className="size-4" />
+            <span>Location of the Day</span>
+          </Button>
+        </div>
+      </header>
 
       <div className="space-y-2">
         <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
