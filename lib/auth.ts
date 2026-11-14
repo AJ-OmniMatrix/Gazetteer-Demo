@@ -143,12 +143,15 @@ export async function destroySession(): Promise<void> {
 }
 
 export async function developerLogin(handle: string): Promise<User> {
+  const cleanHandle = handle.toLowerCase() === "aarav" ? "dev" : handle
   if (!hasDatabase()) {
     const user = getMemoryUsers().find(
-      (u) => u.handle.toLowerCase() === handle.toLowerCase()
+      (u) =>
+        u.handle.toLowerCase() === cleanHandle.toLowerCase() ||
+        (cleanHandle === "dev" && u.isDeveloper)
     )
     if (!user) {
-      throw new Error(`Developer account @${handle} not found`)
+      throw new Error(`Developer account @${cleanHandle} not found`)
     }
     await createSession(user.id)
     return user
@@ -158,16 +161,139 @@ export async function developerLogin(handle: string): Promise<User> {
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
      FROM users
-     WHERE LOWER(handle) = LOWER(?) AND is_developer = 1
+     WHERE (LOWER(handle) = LOWER(?) OR (LOWER(?) = 'dev' AND is_developer = 1))
+     ORDER BY is_developer DESC, id ASC
+     LIMIT 1`,
+    [cleanHandle, cleanHandle]
+  )
+
+  if (rows.length === 0) {
+    if (cleanHandle.toLowerCase() === "dev") {
+      await pool.execute(
+        `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash, is_developer)
+         VALUES (1, '@dev', 'dev', '/images/avatar.png', 'L~N+^As.V?j[~VayaefQIqWCozaz', 1)
+         ON DUPLICATE KEY UPDATE display_name = '@dev', handle = 'dev', is_developer = 1`
+      )
+      const [newRows] = await pool.execute<RowDataPacket[]>(
+        `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
+         FROM users WHERE LOWER(handle) = 'dev' LIMIT 1`
+      )
+      if (newRows.length > 0) {
+        const u = mapUser(newRows[0])
+        await createSession(u.id)
+        return u
+      }
+    }
+    throw new Error(`Developer account @${cleanHandle} not found`)
+  }
+
+  const user = mapUser(rows[0])
+  await createSession(user.id)
+  return user
+}
+
+export async function loginUser(rawHandle: string): Promise<User> {
+  const handle = rawHandle
+    .trim()
+    .toLowerCase()
+    .replace(/^@/, "")
+    .replace(/[^a-z0-9_]/g, "")
+    .slice(0, 40)
+
+  if (!handle) {
+    throw new Error("Please enter a valid username")
+  }
+
+  if (!hasDatabase()) {
+    const memoryUsers = getMemoryUsers()
+    const user = memoryUsers.find((u) => u.handle.toLowerCase() === handle)
+    if (!user) {
+      throw new Error(`Account @${handle} not found. Please sign up.`)
+    }
+    await createSession(user.id)
+    return user
+  }
+
+  const pool = getPool()
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
+     FROM users
+     WHERE LOWER(handle) = LOWER(?)
      LIMIT 1`,
     [handle]
   )
 
   if (rows.length === 0) {
-    throw new Error(`Developer account @${handle} not found`)
+    throw new Error(`Account @${handle} not found. Please sign up.`)
   }
 
   const user = mapUser(rows[0])
+  await createSession(user.id)
+  return user
+}
+
+export async function registerUser(
+  rawHandle: string,
+  rawDisplayName?: string
+): Promise<User> {
+  const handle = rawHandle
+    .trim()
+    .toLowerCase()
+    .replace(/^@/, "")
+    .replace(/[^a-z0-9_]/g, "")
+    .slice(0, 40)
+
+  if (!handle) {
+    throw new Error("Please choose a valid username")
+  }
+
+  const displayName = (rawDisplayName?.trim() || `@${handle}`).slice(0, 80)
+
+  if (!hasDatabase()) {
+    const memoryUsers = getMemoryUsers()
+    const existing = memoryUsers.find((u) => u.handle.toLowerCase() === handle)
+    if (existing) {
+      throw new Error(`Username @${handle} is already taken. Please sign in.`)
+    }
+    const user: User = {
+      id: memoryUsers.length + 1,
+      displayName,
+      handle,
+      avatarUrl: "/images/avatar.png",
+      avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
+      isDeveloper: false,
+    }
+    memoryUsers.push(user)
+    await createSession(user.id)
+    return user
+  }
+
+  const pool = getPool()
+  const [existingRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id FROM users WHERE LOWER(handle) = LOWER(?) LIMIT 1`,
+    [handle]
+  )
+
+  if (existingRows.length > 0) {
+    throw new Error(`Username @${handle} is already taken. Please sign in.`)
+  }
+
+  const defaultAvatar = "/images/avatar.png"
+  const defaultBlurhash = "L~N+^As.V?j[~VayaefQIqWCozaz"
+
+  await pool.execute(
+    `INSERT INTO users (display_name, handle, avatar_url, avatar_blurhash, is_developer)
+     VALUES (?, ?, ?, ?, 0)`,
+    [displayName, handle, defaultAvatar, defaultBlurhash]
+  )
+
+  const [createdRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
+     FROM users WHERE LOWER(handle) = LOWER(?) LIMIT 1`,
+    [handle]
+  )
+
+  const user = mapUser(createdRows[0])
   await createSession(user.id)
   return user
 }

@@ -12,6 +12,8 @@ import {
   developerLogin,
   getSessionUser,
   loginOrRegister,
+  loginUser,
+  registerUser,
 } from "@/lib/auth"
 import type {
   PlaceSummary,
@@ -35,6 +37,37 @@ export async function developerLoginAction(
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Developer login failed",
+    }
+  }
+}
+
+export async function loginAction(
+  handle: string
+): Promise<{ ok: boolean; user?: User; error?: string }> {
+  try {
+    const user = await loginUser(handle)
+    revalidatePath("/", "layout")
+    return { ok: true, user }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Sign-in failed",
+    }
+  }
+}
+
+export async function registerAction(
+  handle: string,
+  displayName?: string
+): Promise<{ ok: boolean; user?: User; error?: string }> {
+  try {
+    const user = await registerUser(handle, displayName)
+    revalidatePath("/", "layout")
+    return { ok: true, user }
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Sign-up failed",
     }
   }
 }

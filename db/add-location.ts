@@ -246,8 +246,8 @@ export interface RawPlaceInput {
 
 export const SEED_USER = {
   id: 1,
-  displayName: "Aarav Sen",
-  handle: "aarav",
+  displayName: "@dev",
+  handle: "dev",
   avatarUrl: "/images/avatar.png",
   avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
 }
