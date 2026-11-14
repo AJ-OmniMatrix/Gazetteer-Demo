@@ -320,18 +320,13 @@ export function FloatingDock({
         className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2"
       >
         <motion.nav
-          layout
           aria-label="Primary actions"
-          transition={{
-            layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
-          }}
           className="flex items-center gap-1 rounded-full border border-border/80 bg-background/95 p-1.5 shadow-lg backdrop-blur-md"
         >
           <AnimatePresence mode="popLayout" initial={false}>
             {!expanded ? (
               <motion.div
                 key="list"
-                layout
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
@@ -342,7 +337,6 @@ export function FloatingDock({
                 transition={{
                   duration: DURATION_ENTER,
                   ease: EASE_OUT,
-                  layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
                 }}
                 onMouseEnter={() => handleNavMouseEnter("list")}
                 onMouseLeave={handleNavMouseLeave}
@@ -352,7 +346,6 @@ export function FloatingDock({
                   className="h-11 rounded-full px-3 transition-colors"
                   onFocus={() => handleNavMouseEnter("list")}
                   onBlur={handleNavMouseLeave}
-                  onClick={handleNavMouseLeave}
                   aria-label={leftAriaLabel}
                   nativeButton={false}
                   render={<Link href={leftHref} prefetch={true} />}
@@ -446,7 +439,7 @@ export function FloatingDock({
           </AnimatePresence>
 
           <motion.div
-            animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
+            animate={hasToggled ? { scale: [1, 0.94, 1] } : undefined}
             transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
           >
             <Button
@@ -472,7 +465,6 @@ export function FloatingDock({
             {!expanded ? (
               <motion.div
                 key="explore"
-                layout
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
@@ -483,7 +475,6 @@ export function FloatingDock({
                 transition={{
                   duration: DURATION_ENTER,
                   ease: EASE_OUT,
-                  layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
                 }}
                 onMouseEnter={() => handleNavMouseEnter("explore")}
                 onMouseLeave={handleNavMouseLeave}
@@ -493,7 +484,6 @@ export function FloatingDock({
                   className="h-11 rounded-full px-3 transition-colors"
                   onFocus={() => handleNavMouseEnter("explore")}
                   onBlur={handleNavMouseLeave}
-                  onClick={handleNavMouseLeave}
                   aria-label={rightAriaLabel}
                   nativeButton={false}
                   render={<Link href={rightHref} prefetch={true} />}
