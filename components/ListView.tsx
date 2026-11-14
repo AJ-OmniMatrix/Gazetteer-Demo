@@ -139,7 +139,7 @@ export function ListView({
           Authentication Required
         </Badge>
         <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-          Your Personal Travel List
+          Personal Catalogue
         </h1>
         <p className="max-w-md text-sm text-muted-foreground">
           Sign in to keep track of every place you visit, unlock your travel
@@ -156,16 +156,6 @@ export function ListView({
             <Zap />
             <span>Sign In / Test Login</span>
           </Button>
-
-          <Button
-            variant="outline"
-            className="min-h-11 rounded-full px-5"
-            nativeButton={false}
-            render={<Link href="/explore" prefetch={true} />}
-          >
-            <Compass />
-            <span>Explore Cities</span>
-          </Button>
         </div>
       </section>
     )
@@ -174,32 +164,13 @@ export function ListView({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-primary">
-            <ListCheck className="size-5" />
-            <span className="font-mono text-xs tracking-wider uppercase">
-              Personal Catalogue
-            </span>
-          </div>
+        <div>
           <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-            {user.displayName}&apos;s List
+            Personal Catalogue
           </h1>
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            @{user.handle} · Catalogued travel logs and visited destinations
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 rounded-full px-3.5 text-xs"
-            nativeButton={false}
-            render={<Link href="/explore" prefetch={true} />}
-          >
-            <Compass className="size-4 text-primary" />
-            <span>Explore Cities</span>
-          </Button>
           <Button
             variant="ghost"
             size="sm"
