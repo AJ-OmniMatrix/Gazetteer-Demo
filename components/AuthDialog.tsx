@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { AlertCircle, Code2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { cn } from "cn"
 import {
   developerLoginAction,
   loginAction,
@@ -153,33 +152,6 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
             <span className="relative bg-background px-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
               Or
             </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
-            <button
-              type="button"
-              onClick={() => setTab("signin")}
-              className={cn(
-                "flex h-10 items-center justify-center rounded-xl text-xs font-medium transition-[background-color,color,box-shadow] duration-150 active:scale-[0.97]",
-                tab === "signin"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("signup")}
-              className={cn(
-                "flex h-10 items-center justify-center rounded-xl text-xs font-medium transition-[background-color,color,box-shadow] duration-150 active:scale-[0.97]",
-                tab === "signup"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Sign Up
-            </button>
           </div>
 
           {tab === "signin" ? (
