@@ -1,12 +1,17 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DURATION_ENTER, EASE_OUT } from "@/lib/motion"
+import {
+  DURATION_ENTER,
+  DURATION_EXIT,
+  EASE_IN,
+  EASE_OUT,
+} from "@/lib/motion"
 import type { User } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -48,48 +53,37 @@ const TOUR_STEPS: TourStep[] = [
     preferredPlacement: "bottom",
   },
   {
-    selector: '[data-tour="checkin"]',
-    title: "One-Tap Travel Check-In",
-    subtitle: "Instant Logging",
+    selector: '[data-tour="dock-list"]',
+    title: "Your Travel List",
+    subtitle: "Personal Catalog",
     description:
-      "Log places you have explored or mark locations for future travels. Your check-ins update optimistically with instant undo and live statistics.",
-    tip: "Try tapping this button directly to test the optimistic visit counter!",
+      "View all your visited locations and wishlist destinations in one place. Filter by category, review coordinates, and manage your catalogue.",
+    tip: "Tap this button anytime to navigate directly to your curated travel list.",
     radius: 9999,
     pad: 6,
     preferredPlacement: "top",
   },
   {
-    selector: '[data-tour="dock"]',
-    title: "Floating Compass Dock",
-    subtitle: "Primary Navigation",
+    selector: '[data-tour="dock-explore"]',
+    title: "Explore Destinations",
+    subtitle: "City Showcase",
     description:
-      "Your central action deck stays with you across the app. Access your personal List, discover cities in Explore, or expand tools for GPS scanning and instant search.",
-    tip: "Expand the dock using the center plus icon to reveal additional quick tools.",
+      "Discover iconic world cities like Kyoto and Paris, with hand-picked shrines, museums, temples, and historical landmarks.",
+    tip: "Tap this button anytime to discover destinations organized by city.",
     radius: 9999,
-    pad: 8,
+    pad: 6,
     preferredPlacement: "top",
   },
   {
-    selector: '[data-tour="brand"]',
-    title: "Gazetteer Home Brand",
-    subtitle: "Instant Return",
+    selector: '[data-tour="dock-expand"]',
+    title: "Action Compass & Tools",
+    subtitle: "Expandable Deck",
     description:
-      "Tap the Gazetteer brand heading at the top-left at any time to smoothly transition back to the daily sanctuary.",
-    tip: "Smooth page morphs are powered by Next.js View Transitions.",
-    radius: 12,
-    pad: 8,
-    preferredPlacement: "bottom",
-  },
-  {
-    selector: '[data-tour="profile"]',
-    title: "Traveler Profile & Help",
-    subtitle: "Account & Guides",
-    description:
-      "Track your visited count, switch between viewports, manage accounts, or launch this interactive tutorial whenever you need a refresher.",
-    tip: "Sign in with a username to persist your visits across sessions.",
+      "Tap the center plus button to expand your command dock, revealing Nearby GPS radius scanning and instant prefix trie search.",
+    tip: "Try tapping '+' now or anytime to reveal quick travel actions!",
     radius: 9999,
     pad: 6,
-    preferredPlacement: "bottom",
+    preferredPlacement: "top",
   },
 ]
 
@@ -117,8 +111,23 @@ export function InteractiveTutorial({
   const [step, setStep] = useState(0)
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
   const [viewport, setViewport] = useState({ width: 1200, height: 800 })
+  const [cardHeight, setCardHeight] = useState(280)
+  const cardRef = useRef<HTMLDivElement | null>(null)
 
   const currentStep = TOUR_STEPS[step]
+
+  useEffect(() => {
+    if (!open || !cardRef.current) return
+    const el = cardRef.current
+    const ro = new ResizeObserver(() => {
+      const h = el.offsetHeight
+      if (h > 0) {
+        setCardHeight(h)
+      }
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [open, step])
 
   const updateMeasurements = useCallback(() => {
     if (typeof window === "undefined" || !open) return
@@ -236,40 +245,19 @@ export function InteractiveTutorial({
   }
 
   const cardWidth = Math.min(360, viewport.width - 32)
-  const cardEstimatedHeight = 250
-  const spaceBelow = targetRect
-    ? viewport.height - (targetRect.top + targetRect.height)
-    : viewport.height / 2
-  const spaceAbove = targetRect ? targetRect.top : viewport.height / 2
-
   let cardTop: number
+
   if (!targetRect) {
-    cardTop = (viewport.height - cardEstimatedHeight) / 2
+    cardTop = (viewport.height - cardHeight) / 2
   } else if (currentStep.preferredPlacement === "bottom") {
-    if (spaceBelow >= cardEstimatedHeight + 16 || spaceBelow >= spaceAbove) {
-      cardTop = targetRect.top + targetRect.height + 14
-    } else {
-      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
-    }
-  } else if (currentStep.preferredPlacement === "top") {
-    if (spaceAbove >= cardEstimatedHeight + 16 || spaceAbove >= spaceBelow) {
-      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
-    } else {
-      cardTop = targetRect.top + targetRect.height + 14
-    }
+    cardTop = targetRect.top + targetRect.height + 16
   } else {
-    if (spaceBelow >= cardEstimatedHeight + 16) {
-      cardTop = targetRect.top + targetRect.height + 14
-    } else if (spaceAbove >= cardEstimatedHeight + 16) {
-      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
-    } else {
-      cardTop = (viewport.height - cardEstimatedHeight) / 2
-    }
+    cardTop = targetRect.top - cardHeight - 20
   }
 
   cardTop = Math.max(
     16,
-    Math.min(viewport.height - cardEstimatedHeight - 16, cardTop)
+    Math.min(viewport.height - cardHeight - 16, cardTop)
   )
 
   const targetCenterX = targetRect
@@ -324,10 +312,16 @@ export function InteractiveTutorial({
 
       <AnimatePresence mode="wait">
         <motion.div
+          ref={cardRef}
           key={`tour-card-${step}`}
           initial={{ opacity: 0, y: 10, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -6, scale: 0.96 }}
+          exit={{
+            opacity: 0,
+            y: -6,
+            scale: 0.96,
+            transition: { duration: DURATION_EXIT, ease: EASE_IN },
+          }}
           transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
           style={{
             position: "fixed",

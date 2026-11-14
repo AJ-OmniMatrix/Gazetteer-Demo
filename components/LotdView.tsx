@@ -281,18 +281,16 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             <ExternalLink className="size-3.5 opacity-60" />
           </Button>
 
-          <div data-tour="checkin" className="inline-flex shrink-0">
-            <VisitStatusButton
-              visited={visited}
-              activeLabel="In Your List"
-              idleLabel="Add to List"
-              iconOnly
-              idleIcon={ListPlus}
-              activeIcon={ListCheck}
-              className="size-11"
-              onClick={handleQuickAdd}
-            />
-          </div>
+          <VisitStatusButton
+            visited={visited}
+            activeLabel="In Your List"
+            idleLabel="Add to List"
+            iconOnly
+            idleIcon={ListPlus}
+            activeIcon={ListCheck}
+            className="size-11"
+            onClick={handleQuickAdd}
+          />
         </div>
       </motion.div>
     </section>

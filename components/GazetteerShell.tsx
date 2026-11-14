@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
@@ -12,7 +12,7 @@ import { TopRightPill } from "@/components/TopRightPill"
 import { ScrollReveal } from "@/components/ScrollReveal"
 import { AuthProvider } from "@/components/auth-context"
 import { useCatalog } from "@/hooks/use-catalog"
-import type { CatalogPayload } from "@/lib/types"
+import type { CatalogPayload, User } from "@/lib/types"
 
 interface GazetteerShellProps {
   initialData: CatalogPayload
@@ -27,21 +27,24 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
   const [gpsOpen, setGpsOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
+  const prevUserRef = useRef<User | null>(null)
 
   useEffect(() => {
-    try {
-      const seen = localStorage.getItem("gazetteer_seen_tutorial")
-      if (!seen) {
+    const prev = prevUserRef.current
+    prevUserRef.current = catalog.user
+
+    if (!catalog.user) return
+
+    if (catalog.user.isDeveloper) {
+      if (!prev || !prev.isDeveloper) {
         const timer = setTimeout(() => {
           setHelpOpen(true)
-        }, 750)
+        }, 650)
         return () => clearTimeout(timer)
       }
-    } catch {}
-  }, [])
+      return
+    }
 
-  useEffect(() => {
-    if (!catalog.user) return
     try {
       const userKey = `gazetteer_seen_tutorial_user_${catalog.user.id}`
       const userSeen = localStorage.getItem(userKey)

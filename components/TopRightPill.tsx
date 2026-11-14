@@ -51,7 +51,6 @@ export function TopRightPill({
 
   return (
     <div
-      data-tour="profile"
       style={{ viewTransitionName: "top-right-pill" }}
       className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-40 flex items-center gap-1 rounded-full border border-border/80 bg-background/90 p-1 shadow-sm backdrop-blur-md"
     >

@@ -14,7 +14,6 @@ export function TopLeftBrand({ visible }: TopLeftBrandProps) {
       {visible && (
         <motion.div
           key="top-left-brand"
-          data-tour="brand"
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{

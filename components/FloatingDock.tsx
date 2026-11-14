@@ -316,7 +316,6 @@ export function FloatingDock({
     <>
       <div
         ref={dockRef}
-        data-tour="dock"
         style={{ viewTransitionName: "floating-dock" }}
         className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2"
       >
@@ -328,6 +327,7 @@ export function FloatingDock({
             {!expanded ? (
               <motion.div
                 key="list"
+                data-tour="dock-list"
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
@@ -440,6 +440,7 @@ export function FloatingDock({
           </AnimatePresence>
 
           <motion.div
+            data-tour="dock-expand"
             animate={hasToggled ? { scale: [1, 0.94, 1] } : undefined}
             transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
           >
@@ -466,6 +467,7 @@ export function FloatingDock({
             {!expanded ? (
               <motion.div
                 key="explore"
+                data-tour="dock-explore"
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
