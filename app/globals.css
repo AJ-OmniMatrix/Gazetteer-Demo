@@ -129,6 +129,10 @@
   }
 }
 
+[data-closed] {
+  --tw-animation-fill-mode: forwards;
+}
+
 ::view-transition {
   pointer-events: none;
 }
