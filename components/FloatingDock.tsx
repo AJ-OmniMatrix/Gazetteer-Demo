@@ -130,16 +130,6 @@ export function FloatingDock({
   const [hasToggled, setHasToggled] = useState(false)
   const dockRef = useRef<HTMLDivElement>(null)
 
-  const cityPresets = useMemo(() => {
-    const map = new Map<string, { label: string; lat: number; lng: number }>()
-    for (const p of places) {
-      if (!map.has(p.cityName)) {
-        map.set(p.cityName, { label: p.cityName, lat: p.lat, lng: p.lng })
-      }
-    }
-    return Array.from(map.values())
-  }, [places])
-
   const toggleExpanded = (next: boolean) => {
     setHasToggled(true)
     setExpanded(next)
@@ -430,66 +420,46 @@ export function FloatingDock({
             </DrawerDescription>
           </DrawerHeader>
           <div className="space-y-4 px-4 pb-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/40 p-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  {locating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MapPin className="size-4" />
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {locating
+                      ? "Scanning GPS..."
+                      : scannedCity ||
+                        nearestPlaces[0]?.item.cityName ||
+                        "Current Location"}
+                  </span>
+                  {coords && (
+                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                      {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 rounded-full"
+                className="h-8 shrink-0 rounded-full px-3 text-xs"
                 onClick={detectLocation}
                 disabled={locating}
               >
                 {locating ? (
-                  <Loader2 className="animate-spin" />
+                  <Loader2 className="size-3.5 animate-spin" />
                 ) : (
-                  <Crosshair />
+                  <Crosshair className="size-3.5" />
                 )}
-                <span>{locating ? "Scanning..." : "Use My GPS"}</span>
+                <span>{locating ? "Scanning..." : "Rescan"}</span>
               </Button>
-              {cityPresets.map((preset) => {
-                const isSelected =
-                  coords !== null &&
-                  Math.abs(coords.lat - preset.lat) < 0.01 &&
-                  Math.abs(coords.lng - preset.lng) < 0.01
-                return (
-                  <Button
-                    key={preset.label}
-                    variant={isSelected ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-9 rounded-full text-xs"
-                    onClick={() => {
-                      setGeoError(null)
-                      setCoords({ lat: preset.lat, lng: preset.lng })
-                      setScannedCity(preset.label)
-                    }}
-                  >
-                    {preset.label}
-                  </Button>
-                )
-              })}
             </div>
-
-            {locating && (
-              <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
-                <Loader2 className="size-3.5 animate-spin" />
-                <span>Scanning location...</span>
-              </div>
-            )}
-
-            {!locating && coords && (
-              <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2 text-xs">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <MapPin className="size-3.5 text-primary" />
-                  <span>
-                    {scannedCity ||
-                      nearestPlaces[0]?.item.cityName ||
-                      "Current Location"}
-                  </span>
-                </div>
-                <span className="font-mono text-muted-foreground tabular-nums">
-                  {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
-                </span>
-              </div>
-            )}
 
             {geoError && (
               <p className="rounded-2xl border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
