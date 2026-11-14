@@ -1,5 +1,6 @@
 "use client"
 
+import type { LucideIcon } from "lucide-react"
 import { Check, Plus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { Button } from "@/components/ui/button"
@@ -11,7 +12,10 @@ interface VisitStatusButtonProps {
   activeLabel: string
   idleLabel: string
   disabled?: boolean
-  size?: "default" | "sm"
+  size?: "default" | "sm" | "icon"
+  iconOnly?: boolean
+  idleIcon?: LucideIcon
+  activeIcon?: LucideIcon
   className?: string
   onClick: () => void
 }
@@ -22,9 +26,15 @@ export function VisitStatusButton({
   idleLabel,
   disabled = false,
   size = "default",
+  iconOnly = false,
+  idleIcon: IdleIcon = Plus,
+  activeIcon: ActiveIcon = Check,
   className,
   onClick,
 }: VisitStatusButtonProps) {
+  const Icon = visited ? ActiveIcon : IdleIcon
+  const label = visited ? activeLabel : idleLabel
+
   return (
     <motion.div
       animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
@@ -32,10 +42,12 @@ export function VisitStatusButton({
     >
       <Button
         variant={visited ? "secondary" : "default"}
-        size={size}
+        size={iconOnly ? "icon" : size}
         className={cn("rounded-full", className)}
         disabled={disabled}
         onClick={onClick}
+        aria-label={label}
+        title={label}
       >
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
@@ -48,14 +60,13 @@ export function VisitStatusButton({
               transition: { duration: DURATION_EXIT, ease: EASE_IN },
             }}
             transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-            className="inline-flex items-center gap-1.5"
-          >
-            {visited ? (
-              <Check className="size-4" />
-            ) : (
-              <Plus className="size-4" />
+            className={cn(
+              "inline-flex items-center justify-center",
+              !iconOnly && "gap-1.5"
             )}
-            <span>{visited ? activeLabel : idleLabel}</span>
+          >
+            <Icon className={iconOnly ? "size-5" : "size-4"} />
+            {!iconOnly && <span>{label}</span>}
           </motion.span>
         </AnimatePresence>
       </Button>

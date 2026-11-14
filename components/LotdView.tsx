@@ -1,7 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { Compass, ExternalLink, MapPin } from "lucide-react"
+import {
+  Compass,
+  ExternalLink,
+  ListCheck,
+  ListPlus,
+  MapPin,
+} from "lucide-react"
 import { motion } from "motion/react"
 import BlurText from "@/components/BlurText"
 import { BlurHashImage } from "@/components/BlurHashImage"
@@ -267,7 +273,10 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             visited={visited}
             activeLabel="In Your List"
             idleLabel="Add to List"
-            className="min-h-11 px-5"
+            iconOnly
+            idleIcon={ListPlus}
+            activeIcon={ListCheck}
+            className="size-11"
             onClick={handleQuickAdd}
           />
         </div>
