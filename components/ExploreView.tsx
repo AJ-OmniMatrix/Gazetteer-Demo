@@ -157,7 +157,7 @@ export function ExploreView() {
           render={<Link href="/" prefetch={true} />}
         >
           <ArrowLeft className="size-3.5" />
-          <span>Featured Spot</span>
+          <span>Location of the Day</span>
         </Button>
       </div>
 

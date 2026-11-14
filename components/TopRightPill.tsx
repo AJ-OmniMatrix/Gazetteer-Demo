@@ -7,6 +7,7 @@ import {
   ListCheck,
   LogIn,
   LogOut,
+  Sparkles,
   User as UserIcon,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -109,6 +110,10 @@ export function TopRightPill({
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/" />}>
+                <Sparkles />
+                <span>Location of the Day</span>
+              </DropdownMenuItem>
               <DropdownMenuItem render={<Link href="/list" />}>
                 <ListCheck />
                 <span>Your List</span>
