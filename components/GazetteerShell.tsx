@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
 import { Toaster } from "@/components/ui/sonner"
 import { FloatingDock } from "@/components/FloatingDock"
+import { TopLeftBrand } from "@/components/TopLeftBrand"
 import { TopRightPill } from "@/components/TopRightPill"
 import { ScrollReveal } from "@/components/ScrollReveal"
 import { AuthProvider } from "@/components/auth-context"
@@ -28,6 +29,8 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
 
   return (
     <MotionConfig reducedMotion="user">
+      <TopLeftBrand visible={fitViewport} />
+
       <TopRightPill
         user={catalog.user}
         mode={catalog.mode}
