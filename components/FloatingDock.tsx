@@ -35,7 +35,7 @@ import {
   MAX_ROW_STAGGER,
   ROW_STAGGER,
 } from "@/lib/motion"
-import type { PlaceSummary, VisitSource } from "@/lib/types"
+import type { PlaceSummary, User, VisitSource } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 function formatDistanceKm(distanceKm: number): string {
@@ -91,6 +91,7 @@ async function resolveCityName(
 }
 
 interface FloatingDockProps {
+  user?: User | null
   places: PlaceSummary[]
   visitedSet: Set<number>
   gpsOpen: boolean
@@ -101,6 +102,7 @@ interface FloatingDockProps {
 }
 
 export function FloatingDock({
+  user,
   places,
   visitedSet,
   gpsOpen,
@@ -293,9 +295,11 @@ export function FloatingDock({
                   variant="ghost"
                   size="icon-lg"
                   className="size-11 rounded-full"
-                  aria-label="Travel list"
+                  aria-label="Personal catalogue"
                   nativeButton={false}
-                  render={<Link href="/list" prefetch={true} />}
+                  render={
+                    <Link href={user ? "/list" : "/signin"} prefetch={true} />
+                  }
                 >
                   <ListCheck className="size-5" />
                 </Button>

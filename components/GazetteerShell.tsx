@@ -43,6 +43,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         disabled={gpsOpen || searchOpen || helpOpen}
         dock={
           <FloatingDock
+            user={catalog.user}
             places={catalog.places}
             visitedSet={visitedSet}
             gpsOpen={gpsOpen}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import {
   ArrowLeft,
@@ -9,13 +10,11 @@ import {
   Compass,
   ExternalLink,
   ListCheck,
-  Lock,
   MapPin,
   Search,
   SlidersHorizontal,
   Trash2,
   X,
-  Zap,
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
@@ -46,7 +45,7 @@ export function ListView({
 }: {
   initialVisits?: UserVisitItem[]
 }) {
-  const { catalog, undoCheckIn, openAuth } = useCatalog()
+  const { catalog, undoCheckIn } = useCatalog()
   const user = catalog.user
 
   const { data: visits = initialVisits, isLoading } = useQuery({
@@ -174,38 +173,7 @@ export function ListView({
       ?.label || selectedCategory
 
   if (!user) {
-    return (
-      <section className="mx-auto flex max-w-xl flex-col items-center justify-center gap-4 rounded-4xl border bg-card p-8 text-center shadow-xs sm:p-10">
-        <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Lock className="size-7" />
-        </div>
-        <Badge
-          variant="secondary"
-          className="px-3 py-1 font-mono text-xs tracking-wider uppercase"
-        >
-          Authentication Required
-        </Badge>
-        <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-          Personal Catalogue
-        </h1>
-        <p className="max-w-md text-sm text-muted-foreground">
-          Sign in to keep track of every place you visit, unlock your travel
-          stats across cities, and save destinations to your personal catalogue.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Button
-            className="min-h-11 rounded-full px-6 font-medium"
-            onClick={() =>
-              openAuth("Sign in to view and manage your travel list")
-            }
-          >
-            <Zap />
-            <span>Sign In / Test Login</span>
-          </Button>
-        </div>
-      </section>
-    )
+    redirect("/signin")
   }
 
   return (
