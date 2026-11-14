@@ -208,7 +208,10 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col justify-center gap-3 sm:gap-4">
-      <header className="flex shrink-0 flex-col items-center gap-1 text-center">
+      <header
+        data-tour="lotd"
+        className="flex shrink-0 flex-col items-center gap-1 text-center"
+      >
         <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase tabular-nums sm:text-xs">
           {todayLabel}
         </p>
@@ -278,16 +281,18 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
             <ExternalLink className="size-3.5 opacity-60" />
           </Button>
 
-          <VisitStatusButton
-            visited={visited}
-            activeLabel="In Your List"
-            idleLabel="Add to List"
-            iconOnly
-            idleIcon={ListPlus}
-            activeIcon={ListCheck}
-            className="size-11"
-            onClick={handleQuickAdd}
-          />
+          <div data-tour="checkin" className="inline-flex shrink-0">
+            <VisitStatusButton
+              visited={visited}
+              activeLabel="In Your List"
+              idleLabel="Add to List"
+              iconOnly
+              idleIcon={ListPlus}
+              activeIcon={ListCheck}
+              className="size-11"
+              onClick={handleQuickAdd}
+            />
+          </div>
         </div>
       </motion.div>
     </section>

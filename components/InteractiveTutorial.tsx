@@ -1,504 +1,449 @@
 "use client"
 
-import { useState } from "react"
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Compass,
-  ListCheck,
-  MapPin,
-  Plus,
-  Search,
-  Sparkles,
-} from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { DURATION_ENTER, EASE_OUT } from "@/lib/motion"
+import type { User } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+interface TourStep {
+  selector: string
+  title: string
+  subtitle: string
+  description: string
+  tip?: string
+  radius: number
+  pad?: number
+  preferredPlacement?: "top" | "bottom"
+}
+
+interface TargetRect {
+  top: number
+  left: number
+  width: number
+  height: number
+  radius: number
+}
 
 interface InteractiveTutorialProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  user?: User | null
 }
 
-const SAMPLE_PLACES = [
-  { name: "Fushimi Inari-taisha", city: "Kyoto", cat: "Shrine" },
-  { name: "Louvre Museum", city: "Paris", cat: "Museum" },
-  { name: "Kinkaku-ji", city: "Kyoto", cat: "Temple" },
-  { name: "Eiffel Tower", city: "Paris", cat: "Landmark" },
-  { name: "Senso-ji", city: "Tokyo", cat: "Temple" },
+const TOUR_STEPS: TourStep[] = [
+  {
+    selector: '[data-tour="lotd"]',
+    title: "Location of the Day",
+    subtitle: "Daily Showcase",
+    description:
+      "Every 24 hours, Gazetteer spotlights an architectural or cultural wonder with curated high-resolution photography, history, and geographical coordinates.",
+    tip: "Scroll down to inspect the photo collage and explore architectural context.",
+    radius: 16,
+    pad: 10,
+    preferredPlacement: "bottom",
+  },
+  {
+    selector: '[data-tour="checkin"]',
+    title: "One-Tap Travel Check-In",
+    subtitle: "Instant Logging",
+    description:
+      "Log places you have explored or mark locations for future travels. Your check-ins update optimistically with instant undo and live statistics.",
+    tip: "Try tapping this button directly to test the optimistic visit counter!",
+    radius: 9999,
+    pad: 6,
+    preferredPlacement: "top",
+  },
+  {
+    selector: '[data-tour="dock"]',
+    title: "Floating Compass Dock",
+    subtitle: "Primary Navigation",
+    description:
+      "Your central action deck stays with you across the app. Access your personal List, discover cities in Explore, or expand tools for GPS scanning and instant search.",
+    tip: "Expand the dock using the center plus icon to reveal additional quick tools.",
+    radius: 9999,
+    pad: 8,
+    preferredPlacement: "top",
+  },
+  {
+    selector: '[data-tour="brand"]',
+    title: "Gazetteer Home Brand",
+    subtitle: "Instant Return",
+    description:
+      "Tap the Gazetteer brand heading at the top-left at any time to smoothly transition back to the daily sanctuary.",
+    tip: "Smooth page morphs are powered by Next.js View Transitions.",
+    radius: 12,
+    pad: 8,
+    preferredPlacement: "bottom",
+  },
+  {
+    selector: '[data-tour="profile"]',
+    title: "Traveler Profile & Help",
+    subtitle: "Account & Guides",
+    description:
+      "Track your visited count, switch between viewports, manage accounts, or launch this interactive tutorial whenever you need a refresher.",
+    tip: "Sign in with a username to persist your visits across sessions.",
+    radius: 9999,
+    pad: 6,
+    preferredPlacement: "bottom",
+  },
 ]
+
+function getCutoutPath(vw: number, vh: number, rect: TargetRect | null) {
+  if (!rect) {
+    return `M 0,0 H ${vw} V ${vh} H 0 Z`
+  }
+  const { top, left, width, height, radius } = rect
+  const right = left + width
+  const bottom = top + height
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2))
+  if (r === 0) {
+    return `M 0,0 H ${vw} V ${vh} H 0 Z M ${left},${top} H ${right} V ${bottom} H ${left} Z`
+  }
+  return `M 0,0 H ${vw} V ${vh} H 0 Z M ${left + r},${top} H ${right - r} A ${r},${r} 0 0 1 ${right},${top + r} V ${bottom - r} A ${r},${r} 0 0 1 ${right - r},${bottom} H ${left + r} A ${r},${r} 0 0 1 ${left},${bottom - r} V ${top + r} A ${r},${r} 0 0 1 ${left + r},${top} Z`
+}
 
 export function InteractiveTutorial({
   open,
   onOpenChange,
+  user,
 }: InteractiveTutorialProps) {
+  const pathname = usePathname()
+  const router = useRouter()
   const [step, setStep] = useState(0)
-  const [visitedDemo, setVisitedDemo] = useState(false)
-  const [dockExpanded, setDockExpanded] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sheetPulled, setSheetPulled] = useState(false)
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
+  const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
+  const [viewport, setViewport] = useState({ width: 1200, height: 800 })
 
-  const markStepDone = (stepIdx: number) => {
-    setCompletedSteps((prev) => {
-      const next = new Set(prev)
-      next.add(stepIdx)
-      return next
-    })
-  }
+  const currentStep = TOUR_STEPS[step]
 
-  const handleNext = () => {
-    if (step < 4) {
+  const updateMeasurements = useCallback(() => {
+    if (typeof window === "undefined" || !open) return
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    setViewport({ width: vw, height: vh })
+
+    const cur = TOUR_STEPS[step]
+    if (!cur) return
+
+    const el = document.querySelector(cur.selector)
+    if (el) {
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "nearest",
+      })
+      const r = el.getBoundingClientRect()
+      const pad = cur.pad ?? 8
+      const top = Math.max(0, r.top - pad)
+      const left = Math.max(0, r.left - pad)
+      const width = r.width + pad * 2
+      const height = r.height + pad * 2
+      const maxR = Math.min(width, height) / 2
+      const radius = Math.min(cur.radius, maxR)
+      setTargetRect({ top, left, width, height, radius })
+    } else {
+      const w = Math.min(320, vw - 48)
+      const h = 72
+      setTargetRect({
+        top: (vh - h) / 2,
+        left: (vw - w) / 2,
+        width: w,
+        height: h,
+        radius: 16,
+      })
+    }
+  }, [open, step])
+
+  useEffect(() => {
+    if (!open) return
+    const id = requestAnimationFrame(updateMeasurements)
+    const timer = setTimeout(updateMeasurements, 80)
+    return () => {
+      cancelAnimationFrame(id)
+      clearTimeout(timer)
+    }
+  }, [open, step, updateMeasurements])
+
+  useEffect(() => {
+    if (!open) return
+    if (pathname !== "/") {
+      router.push("/")
+    }
+  }, [open, pathname, router])
+
+  useEffect(() => {
+    if (!open) return
+
+    const handleResize = () => updateMeasurements()
+    const handleScroll = () => updateMeasurements()
+
+    window.addEventListener("resize", handleResize)
+    window.addEventListener("scroll", handleScroll, true)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      window.removeEventListener("scroll", handleScroll, true)
+    }
+  }, [open, updateMeasurements])
+
+  const handleFinish = useCallback(() => {
+    try {
+      localStorage.setItem("gazetteer_seen_tutorial", "true")
+      if (user?.id) {
+        localStorage.setItem(`gazetteer_seen_tutorial_user_${user.id}`, "true")
+      }
+    } catch {}
+    onOpenChange(false)
+  }, [onOpenChange, user])
+
+  const handleNext = useCallback(() => {
+    if (step < TOUR_STEPS.length - 1) {
       setStep((s) => s + 1)
     } else {
-      onOpenChange(false)
-      setStep(0)
+      handleFinish()
     }
-  }
+  }, [step, handleFinish])
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (step > 0) {
       setStep((s) => s - 1)
     }
+  }, [step])
+
+  useEffect(() => {
+    if (!open) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleFinish()
+      } else if (e.key === "ArrowRight") {
+        handleNext()
+      } else if (e.key === "ArrowLeft") {
+        handleBack()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [open, handleFinish, handleNext, handleBack])
+
+  if (!open) {
+    return null
   }
 
-  const filteredPlaces = SAMPLE_PLACES.filter((p) => {
-    if (!searchQuery.trim()) return true
-    const q = searchQuery.toLowerCase()
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.city.toLowerCase().includes(q) ||
-      p.cat.toLowerCase().includes(q)
-    )
-  })
+  const cardWidth = Math.min(360, viewport.width - 32)
+  const cardEstimatedHeight = 250
+  const spaceBelow = targetRect
+    ? viewport.height - (targetRect.top + targetRect.height)
+    : viewport.height / 2
+  const spaceAbove = targetRect ? targetRect.top : viewport.height / 2
+
+  let cardTop: number
+  if (!targetRect) {
+    cardTop = (viewport.height - cardEstimatedHeight) / 2
+  } else if (currentStep.preferredPlacement === "bottom") {
+    if (spaceBelow >= cardEstimatedHeight + 16 || spaceBelow >= spaceAbove) {
+      cardTop = targetRect.top + targetRect.height + 14
+    } else {
+      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
+    }
+  } else if (currentStep.preferredPlacement === "top") {
+    if (spaceAbove >= cardEstimatedHeight + 16 || spaceAbove >= spaceBelow) {
+      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
+    } else {
+      cardTop = targetRect.top + targetRect.height + 14
+    }
+  } else {
+    if (spaceBelow >= cardEstimatedHeight + 16) {
+      cardTop = targetRect.top + targetRect.height + 14
+    } else if (spaceAbove >= cardEstimatedHeight + 16) {
+      cardTop = Math.max(16, targetRect.top - cardEstimatedHeight - 14)
+    } else {
+      cardTop = (viewport.height - cardEstimatedHeight) / 2
+    }
+  }
+
+  cardTop = Math.max(
+    16,
+    Math.min(viewport.height - cardEstimatedHeight - 16, cardTop)
+  )
+
+  const targetCenterX = targetRect
+    ? targetRect.left + targetRect.width / 2
+    : viewport.width / 2
+  let cardLeft = targetCenterX - cardWidth / 2
+  cardLeft = Math.max(16, Math.min(viewport.width - cardWidth - 16, cardLeft))
+
+  const cutoutPath = getCutoutPath(viewport.width, viewport.height, targetRect)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
-        <DialogHeader className="gap-1">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-              Interactive Tutorial ·{" "}
-              {step < 4 ? `Step ${step + 1} of 4` : "Complete"}
-            </span>
-            {completedSteps.has(step) && step < 4 && (
+    <div className="fixed inset-0 z-[9990] select-none">
+      <svg
+        aria-hidden="true"
+        className="fixed inset-0 size-full pointer-events-auto"
+        width={viewport.width}
+        height={viewport.height}
+      >
+        <path
+          fillRule="evenodd"
+          d={cutoutPath}
+          fill="rgba(0, 0, 0, 0.65)"
+          className="transition-all duration-300 ease-out"
+        />
+      </svg>
+
+      {targetRect && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            top: targetRect.top,
+            left: targetRect.left,
+            width: targetRect.width,
+            height: targetRect.height,
+            borderRadius: targetRect.radius,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 350,
+            damping: 32,
+          }}
+          style={{
+            position: "fixed",
+            zIndex: 9992,
+            pointerEvents: "none",
+          }}
+          className="border-2 border-primary ring-4 ring-primary/25 shadow-[0_0_24px_rgba(245,158,11,0.35)]"
+        />
+      )}
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={`tour-card-${step}`}
+          initial={{ opacity: 0, y: 10, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -6, scale: 0.96 }}
+          transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+          style={{
+            position: "fixed",
+            top: cardTop,
+            left: cardLeft,
+            width: cardWidth,
+            zIndex: 9995,
+          }}
+          className="pointer-events-auto flex flex-col gap-3 rounded-2xl border border-border/90 bg-background/98 p-4 shadow-2xl backdrop-blur-md sm:p-5"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <Badge
                 variant="outline"
-                className="border-primary/40 bg-primary/10 font-mono text-[10px] text-primary"
+                className="gap-1 border-primary/30 bg-primary/10 font-mono text-[11px] text-primary"
               >
-                <Check className="mr-1 size-3" /> Step Tested
+                <Sparkles className="size-3" />
+                <span>
+                  {step + 1} / {TOUR_STEPS.length}
+                </span>
               </Badge>
+              <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                {currentStep.subtitle}
+              </span>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={handleFinish}
+              aria-label="Skip tutorial"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-heading text-lg font-semibold tracking-tight text-foreground">
+              {currentStep.title}
+            </h3>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {currentStep.description}
+            </p>
+          </div>
+
+          {currentStep.tip && (
+            <div className="flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5 text-[11px] text-foreground">
+              <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
+              <span>{currentStep.tip}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-1.5 py-0.5">
+            {TOUR_STEPS.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setStep(i)}
+                className={cn(
+                  "h-1.5 flex-1 rounded-full transition-all duration-200",
+                  step === i
+                    ? "bg-primary"
+                    : "bg-muted hover:bg-muted-foreground/30"
+                )}
+                aria-label={`Jump to tutorial step ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            {step > 0 ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 rounded-full px-3 text-xs"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="size-3" />
+                <span>Back</span>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-full px-3 text-xs text-muted-foreground hover:text-foreground"
+                onClick={handleFinish}
+              >
+                <span>Skip Tour</span>
+              </Button>
+            )}
+
+            {step < TOUR_STEPS.length - 1 ? (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 gap-1.5 rounded-full px-3.5 text-xs shadow-xs"
+                onClick={handleNext}
+              >
+                <span>Next</span>
+                <ArrowRight className="size-3" />
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                className="h-8 gap-1.5 rounded-full px-3.5 text-xs shadow-xs"
+                onClick={handleFinish}
+              >
+                <span>Got It</span>
+                <Check className="size-3" />
+              </Button>
             )}
           </div>
-          <DialogTitle className="font-heading text-2xl font-semibold tracking-tight">
-            {step === 0 && "1. Daily Destinations & Check-In"}
-            {step === 1 && "2. Floating Dock Navigation"}
-            {step === 2 && "3. Instant Prefix Search"}
-            {step === 3 && "4. Kinetic Bottom Reveal"}
-            {step === 4 && "You're All Set!"}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground sm:text-sm">
-            {step === 0 &&
-              "Every day showcases a curated destination. Try checking in right here in the sandbox."}
-            {step === 1 &&
-              "Your bottom dock is the primary control centre. Try expanding it to reveal action tools."}
-            {step === 2 &&
-              "Instant search indexes cities, categories, and place names in a pure TypeScript Prefix Trie."}
-            {step === 3 &&
-              "Pulling up from the bottom triggers a spring-loaded kinetic wordmark reveal."}
-            {step === 4 &&
-              "You now know all the superpowers of Gazetteer. Ready to start cataloguing?"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex items-center gap-1.5 py-1">
-          {[0, 1, 2, 3].map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setStep(i)}
-              className={cn(
-                "h-1.5 flex-1 rounded-full transition-all duration-200",
-                step === i
-                  ? "bg-primary"
-                  : completedSteps.has(i)
-                    ? "bg-primary/40"
-                    : "bg-muted"
-              )}
-              aria-label={`Jump to tutorial step ${i + 1}`}
-            />
-          ))}
-        </div>
-
-        <div className="min-h-[17rem] py-2">
-          <AnimatePresence mode="wait">
-            {step === 0 && (
-              <motion.div
-                key="step-0"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col gap-4 rounded-3xl border bg-card/60 p-4 shadow-2xs sm:p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">
-                        Shrine
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        Kyoto, Japan
-                      </span>
-                    </div>
-                    <h3 className="font-heading text-lg font-medium tracking-tight text-foreground">
-                      Fushimi Inari-taisha
-                    </h3>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      Famous Shinto shrine celebrated for its thousands of
-                      vermilion torii gates winding through Mount Inari.
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 items-center">
-                    <Button
-                      variant={visitedDemo ? "default" : "outline"}
-                      className="h-10 rounded-full px-4 text-xs font-medium transition-all"
-                      onClick={() => {
-                        setVisitedDemo(!visitedDemo)
-                        markStepDone(0)
-                      }}
-                    >
-                      {visitedDemo ? (
-                        <>
-                          <CheckCircle2 className="size-4" />
-                          <span>In Your List</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="size-4 text-primary" />
-                          <span>Add to List</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground">
-                  <Sparkles className="size-4 shrink-0 text-primary" />
-                  <span>
-                    {visitedDemo
-                      ? "Awesome! The location has been recorded. Tap again anytime to toggle or undo."
-                      : "Tap 'Add to List' above to experience optimistic check-in with Sonner feedback."}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 1 && (
-              <motion.div
-                key="step-1"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col items-center justify-center gap-5 rounded-3xl border bg-card/60 p-5 shadow-2xs"
-              >
-                <p className="text-center text-xs text-muted-foreground">
-                  Tap the central plus button to toggle actions:
-                </p>
-
-                <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background p-1.5 shadow-md">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 rounded-full"
-                    aria-label="List"
-                  >
-                    <ListCheck className="size-4" />
-                  </Button>
-
-                  <Button
-                    variant={dockExpanded ? "ghost" : "default"}
-                    size="icon"
-                    className="size-10 rounded-full shadow-xs"
-                    onClick={() => {
-                      setDockExpanded(!dockExpanded)
-                      markStepDone(1)
-                    }}
-                    aria-label="Expand dock"
-                  >
-                    <motion.div
-                      animate={{ rotate: dockExpanded ? 45 : 0 }}
-                      transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                    >
-                      <Plus className="size-4" />
-                    </motion.div>
-                  </Button>
-
-                  <AnimatePresence>
-                    {dockExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0, width: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, width: "auto", scale: 1 }}
-                        exit={{ opacity: 0, width: 0, scale: 0.8 }}
-                        transition={{
-                          duration: DURATION_ENTER,
-                          ease: EASE_OUT,
-                        }}
-                        className="flex items-center gap-1 overflow-hidden"
-                      >
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="size-10 rounded-full"
-                          aria-label="GPS Near Me"
-                        >
-                          <MapPin className="size-4" />
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="size-10 rounded-full"
-                          aria-label="Quick Search"
-                        >
-                          <Search className="size-4" />
-                        </Button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-10 rounded-full"
-                    aria-label="Explore"
-                  >
-                    <Compass className="size-4" />
-                  </Button>
-                </div>
-
-                <div className="flex w-full items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground">
-                  <Sparkles className="size-4 shrink-0 text-primary" />
-                  <span>
-                    {dockExpanded
-                      ? "Great! The GPS coordinates scanner and instant search tools are now visible."
-                      : "The middle button triggers smooth rotation and expands secondary GPS & search shortcuts."}
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div
-                key="step-2"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col gap-3 rounded-3xl border bg-card/60 p-4 shadow-2xs sm:p-5"
-              >
-                <div className="relative">
-                  <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search places, cities, categories..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value)
-                      markStepDone(2)
-                    }}
-                    className="h-10 rounded-2xl pl-9 text-xs sm:text-sm"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    Quick test:
-                  </span>
-                  {["Kyoto", "Paris", "Temple", "Museum"].map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery(tag)
-                        markStepDone(2)
-                      }}
-                      className={cn(
-                        "rounded-full px-2.5 py-0.5 font-mono text-[11px] transition-colors",
-                        searchQuery.toLowerCase() === tag.toLowerCase()
-                          ? "bg-primary font-semibold text-primary-foreground"
-                          : "border bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery("")}
-                      className="rounded-full px-2 py-0.5 font-mono text-[11px] text-muted-foreground hover:text-foreground"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                <div className="max-h-28 divide-y divide-border/60 overflow-y-auto rounded-2xl border bg-background/50">
-                  {filteredPlaces.length > 0 ? (
-                    filteredPlaces.map((p) => (
-                      <div
-                        key={p.name}
-                        className="flex items-center justify-between px-3 py-2 text-xs"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">
-                            {p.name}
-                          </span>
-                          <span className="text-muted-foreground">
-                            ({p.city})
-                          </span>
-                        </div>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {p.cat}
-                        </Badge>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-3 text-center text-xs text-muted-foreground">
-                      No matching destinations found
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key="step-3"
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -12 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col items-center justify-center gap-4 rounded-3xl border bg-card/60 p-5 shadow-2xs"
-              >
-                <div className="relative flex h-28 w-full flex-col justify-end overflow-hidden rounded-2xl border bg-accent/20">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="font-heading text-3xl font-bold tracking-widest text-primary uppercase opacity-80 select-none sm:text-4xl">
-                      GAZETTEER
-                    </span>
-                  </div>
-
-                  <motion.div
-                    animate={{ y: sheetPulled ? -48 : 0 }}
-                    transition={{ type: "spring", damping: 18, stiffness: 220 }}
-                    className="relative z-10 flex h-24 cursor-pointer items-center justify-center rounded-2xl border-t bg-background px-4 text-center shadow-md"
-                    onClick={() => {
-                      setSheetPulled(!sheetPulled)
-                      markStepDone(3)
-                    }}
-                  >
-                    <p className="text-xs font-medium text-foreground">
-                      {sheetPulled
-                        ? "Kinetic reveal active! Tap to snap back."
-                        : "Tap here to simulate pulling the sheet upward."}
-                    </p>
-                  </motion.div>
-                </div>
-
-                <div className="flex w-full items-center gap-2 rounded-2xl border border-primary/20 bg-primary/5 p-3 text-xs text-foreground">
-                  <Sparkles className="size-4 shrink-0 text-primary" />
-                  <span>
-                    On every page, dragging or scrolling past the bottom reveals
-                    the brand wordmark with spring physics.
-                  </span>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div
-                key="step-4"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col items-center justify-center gap-4 rounded-3xl border bg-card/60 p-6 text-center shadow-2xs"
-              >
-                <div className="flex size-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <CheckCircle2 className="size-8" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-heading text-xl font-semibold tracking-tight text-foreground">
-                    Tutorial Completed!
-                  </h3>
-                  <p className="max-w-xs text-xs text-muted-foreground sm:text-sm">
-                    You have mastered location check-ins, dock tools, prefix
-                    search, and the kinetic gravity reveal.
-                  </p>
-                </div>
-                <Button
-                  className="h-11 rounded-full px-6 text-xs font-medium"
-                  onClick={() => {
-                    onOpenChange(false)
-                    setStep(0)
-                  }}
-                >
-                  <Sparkles className="size-4" />
-                  <span>Start Exploring Gazetteer</span>
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="flex items-center justify-between border-t pt-3">
-          {step > 0 && step < 4 ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 gap-1 rounded-full px-3 text-xs"
-              onClick={handleBack}
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Back</span>
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-9 rounded-full px-3 text-xs text-muted-foreground"
-              onClick={() => onOpenChange(false)}
-            >
-              Skip
-            </Button>
-          )}
-
-          {step < 4 && (
-            <Button
-              size="sm"
-              className="h-9 gap-1 rounded-full px-4 text-xs font-medium"
-              onClick={handleNext}
-            >
-              <span>{step === 3 ? "Review" : "Next"}</span>
-              <ArrowRight className="size-3.5" />
-            </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        </motion.div>
+      </AnimatePresence>
+    </div>
   )
 }

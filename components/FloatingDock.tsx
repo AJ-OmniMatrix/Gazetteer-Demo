@@ -316,6 +316,7 @@ export function FloatingDock({
     <>
       <div
         ref={dockRef}
+        data-tour="dock"
         style={{ viewTransitionName: "floating-dock" }}
         className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 z-40 -translate-x-1/2"
       >

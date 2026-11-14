@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { MotionConfig } from "motion/react"
 import { Toaster } from "@/components/ui/sonner"
 import { FloatingDock } from "@/components/FloatingDock"
+import { InteractiveTutorial } from "@/components/InteractiveTutorial"
 import { TopLeftBrand } from "@/components/TopLeftBrand"
 import { TopRightPill } from "@/components/TopRightPill"
 import { ScrollReveal } from "@/components/ScrollReveal"
@@ -27,6 +28,33 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
 
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("gazetteer_seen_tutorial")
+      if (!seen) {
+        const timer = setTimeout(() => {
+          setHelpOpen(true)
+        }, 750)
+        return () => clearTimeout(timer)
+      }
+    } catch {}
+  }, [])
+
+  useEffect(() => {
+    if (!catalog.user) return
+    try {
+      const userKey = `gazetteer_seen_tutorial_user_${catalog.user.id}`
+      const userSeen = localStorage.getItem(userKey)
+      if (!userSeen) {
+        localStorage.setItem(userKey, "true")
+        const timer = setTimeout(() => {
+          setHelpOpen(true)
+        }, 650)
+        return () => clearTimeout(timer)
+      }
+    } catch {}
+  }, [catalog.user])
+
   return (
     <MotionConfig reducedMotion="user">
       <TopLeftBrand visible={fitViewport} />
@@ -35,8 +63,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
         user={catalog.user}
         mode={catalog.mode}
         visitedCount={visitedSet.size}
-        helpOpen={helpOpen}
-        onHelpOpenChange={setHelpOpen}
+        onHelpOpen={() => setHelpOpen(true)}
         onOpenAuth={() => openAuth()}
         onLogout={logout}
       />
@@ -67,6 +94,12 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
           {children}
         </main>
       </ScrollReveal>
+
+      <InteractiveTutorial
+        open={helpOpen}
+        onOpenChange={setHelpOpen}
+        user={catalog.user}
+      />
 
       <Toaster position="top-center" />
     </MotionConfig>
