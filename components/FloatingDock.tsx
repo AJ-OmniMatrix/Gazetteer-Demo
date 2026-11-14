@@ -421,7 +421,7 @@ export function FloatingDock({
           </DrawerHeader>
           <div className="space-y-4 px-4 pb-4">
             <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/40 p-3">
-              <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                   {locating ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -429,7 +429,7 @@ export function FloatingDock({
                     <MapPin className="size-4" />
                   )}
                 </div>
-                <div className="flex min-w-0 flex-col">
+                <div className="flex flex-col min-w-0">
                   <span className="truncate text-sm font-medium text-foreground">
                     {locating
                       ? "Scanning GPS..."
@@ -533,8 +533,8 @@ export function FloatingDock({
             <DrawerTitle className="font-heading text-2xl">
               Search Location
             </DrawerTitle>
-            <DrawerDescription>
-              Find any spot by name, city, or category and mark it visited.
+            <DrawerDescription className="sr-only">
+              Find any spot by name, city, or category and mark it visited
             </DrawerDescription>
           </DrawerHeader>
           <div className="space-y-3 px-4 pb-4">
