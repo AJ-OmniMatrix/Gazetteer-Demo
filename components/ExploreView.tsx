@@ -11,7 +11,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react"
-import { motion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { VisitStatusButton } from "@/components/VisitStatusButton"
 import { Badge } from "@/components/ui/badge"
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/popover"
 import { useCatalog } from "@/hooks/use-catalog"
 import { PrefixTrie } from "@/lib/ads/trie"
-import { DURATION_ENTER, EASE_OUT } from "@/lib/motion"
+import { DURATION_ENTER, EASE_OUT, ROW_STAGGER } from "@/lib/motion"
 
 interface CityInfo {
   cityName: string
@@ -193,7 +193,7 @@ export function ExploreView() {
               placeholder="Search places, cities, categories..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 w-full rounded-2xl border bg-card pr-9 pl-10 shadow-2xs placeholder:text-muted-foreground/70"
+              className="h-10 w-full rounded-2xl border bg-card pr-9 pl-10 shadow-2xs placeholder:text-muted-foreground/70 [&::-webkit-search-cancel-button]:appearance-none"
             />
             {searchQuery && (
               <button
@@ -421,103 +421,114 @@ export function ExploreView() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPlaces.map((place, index) => {
-            const visited = visitedSet.has(place.id)
-            const photo = place.primaryPhoto
+        <motion.div
+          layout
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredPlaces.map((place, index) => {
+              const visited = visitedSet.has(place.id)
+              const photo = place.primaryPhoto
 
-            return (
-              <motion.article
-                key={place.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex flex-col justify-between overflow-hidden rounded-3xl border bg-card p-3 shadow-xs"
-              >
-                <div className="space-y-3">
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted">
-                    {photo ? (
-                      <BlurHashImage
-                        src={photo.imageUrl}
-                        alt={place.name}
-                        blurhash={photo.blurhash}
-                        width={photo.width}
-                        height={photo.height}
-                        fill
-                        loading={index < 6 ? "eager" : "lazy"}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex size-full items-center justify-center text-muted-foreground">
-                        <Compass className="size-8 opacity-40" />
+              return (
+                <motion.article
+                  key={place.id}
+                  layout
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{
+                    duration: DURATION_ENTER,
+                    ease: EASE_OUT,
+                    delay: Math.min(index * ROW_STAGGER, 0.2),
+                  }}
+                  className="flex flex-col justify-between overflow-hidden rounded-3xl border bg-card p-3 shadow-xs"
+                >
+                  <div className="space-y-3">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-muted">
+                      {photo ? (
+                        <BlurHashImage
+                          src={photo.imageUrl}
+                          alt={place.name}
+                          blurhash={photo.blurhash}
+                          width={photo.width}
+                          height={photo.height}
+                          fill
+                          loading={index < 6 ? "eager" : "lazy"}
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center text-muted-foreground">
+                          <Compass className="size-8 opacity-40" />
+                        </div>
+                      )}
+                      <div className="absolute top-2.5 left-2.5">
+                        <Badge
+                          variant="secondary"
+                          className="bg-background/80 text-[11px] backdrop-blur-sm"
+                        >
+                          {place.categoryLabel}
+                        </Badge>
                       </div>
-                    )}
-                    <div className="absolute top-2.5 left-2.5">
-                      <Badge
-                        variant="secondary"
-                        className="bg-background/80 text-[11px] backdrop-blur-sm"
-                      >
-                        {place.categoryLabel}
-                      </Badge>
+                    </div>
+
+                    <div className="space-y-1 px-1">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {place.cityName}, {place.countryCode}
+                        </span>
+                        <span className="font-mono text-[11px] tabular-nums">
+                          {place.lat.toFixed(3)}°, {place.lng.toFixed(3)}°
+                        </span>
+                      </div>
+                      <h2 className="font-heading text-xl font-medium tracking-tight text-balance">
+                        {place.name}
+                      </h2>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">
+                        {place.description}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="space-y-1 px-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        {place.cityName}, {place.countryCode}
-                      </span>
-                      <span className="font-mono text-[11px] tabular-nums">
-                        {place.lat.toFixed(3)}°, {place.lng.toFixed(3)}°
-                      </span>
-                    </div>
-                    <h2 className="font-heading text-xl font-medium tracking-tight text-balance">
-                      {place.name}
-                    </h2>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {place.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 rounded-full px-3 text-xs"
-                    nativeButton={false}
-                    render={
-                      <a
-                        href={place.mapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    }
-                  >
-                    <MapPin className="size-3.5" />
-                    <span>Maps</span>
-                    <ExternalLink className="size-3 opacity-60" />
-                  </Button>
-
-                  <VisitStatusButton
-                    visited={visited}
-                    activeLabel="Visited"
-                    idleLabel="Add"
-                    size="sm"
-                    className="h-9 px-4 text-xs"
-                    onClick={() => {
-                      if (visited) {
-                        undoCheckIn(place)
-                      } else {
-                        checkIn(place, "explore")
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t pt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 rounded-full px-3 text-xs"
+                      nativeButton={false}
+                      render={
+                        <a
+                          href={place.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
                       }
-                    }}
-                  />
-                </div>
-              </motion.article>
-            )
-          })}
-        </div>
+                    >
+                      <MapPin className="size-3.5" />
+                      <span>Maps</span>
+                      <ExternalLink className="size-3 opacity-60" />
+                    </Button>
+
+                    <VisitStatusButton
+                      visited={visited}
+                      activeLabel="Visited"
+                      idleLabel="Add"
+                      size="sm"
+                      className="h-9 px-4 text-xs"
+                      onClick={() => {
+                        if (visited) {
+                          undoCheckIn(place)
+                        } else {
+                          checkIn(place, "explore")
+                        }
+                      }}
+                    />
+                  </div>
+                </motion.article>
+              )
+            })}
+          </AnimatePresence>
+        </motion.div>
       )}
     </section>
   )

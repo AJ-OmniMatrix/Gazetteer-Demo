@@ -496,7 +496,7 @@ export function ListView({
               key={i}
               className="flex flex-col gap-3 rounded-4xl border bg-card p-4"
             >
-              <Skeleton className="aspect-16/9 w-full rounded-2xl" />
+              <Skeleton className="aspect-16/10 w-full rounded-2xl" />
               <Skeleton className="h-5 w-3/4 rounded-md" />
               <Skeleton className="h-4 w-1/2 rounded-md" />
             </div>

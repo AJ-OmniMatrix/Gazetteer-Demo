@@ -142,7 +142,7 @@ function CollageGrid({
             getTileClasses(tileCount, layoutSeed, index)
           )}
         >
-          <div className="size-full transition-transform duration-200 ease-out group-hover:scale-[0.98] group-active:scale-[0.96] motion-reduce:transform-none">
+          <div className="size-full transition-transform duration-200 ease-out group-hover:scale-[0.98] group-active:scale-[0.97] motion-reduce:transform-none">
             <BlurHashImage
               src={photo.imageUrl}
               alt={`${placeName} view ${index + 1}`}
@@ -213,6 +213,7 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
           {todayLabel}
         </p>
         <BlurText
+          as="h1"
           text="Location of the Day"
           trigger="load"
           animateBy="words"
@@ -236,6 +237,14 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <Badge variant="secondary">{lotd.categoryLabel}</Badge>
+            {visited && (
+              <Badge
+                variant="outline"
+                className="border-primary/40 bg-primary/10 text-primary"
+              >
+                Visited
+              </Badge>
+            )}
             <span className="text-sm text-muted-foreground">
               {lotd.cityName}, {lotd.countryName}
             </span>

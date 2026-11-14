@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import type { LucideIcon } from "lucide-react"
 import { Check, Plus } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
@@ -34,16 +35,28 @@ export function VisitStatusButton({
 }: VisitStatusButtonProps) {
   const Icon = visited ? ActiveIcon : IdleIcon
   const label = visited ? activeLabel : idleLabel
+  const [prevVisited, setPrevVisited] = useState(visited)
+
+  if (visited !== prevVisited) {
+    setPrevVisited(visited)
+  }
+
+  const shouldPulse = visited && !prevVisited
 
   return (
     <motion.div
-      animate={{ scale: visited ? [1, 1.04, 1] : 1 }}
+      initial={false}
+      animate={shouldPulse ? { scale: [1, 1.04, 1] } : { scale: 1 }}
       transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
     >
       <Button
         variant={visited ? "secondary" : "default"}
         size={iconOnly ? "icon" : size}
-        className={cn("rounded-full", className)}
+        className={cn(
+          "rounded-full transition-[colors,transform]",
+          visited && "border border-border/80 text-foreground",
+          className
+        )}
         disabled={disabled}
         onClick={onClick}
         aria-label={label}

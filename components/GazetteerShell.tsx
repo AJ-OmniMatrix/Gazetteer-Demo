@@ -57,7 +57,7 @@ function InnerShell({ initialData, children }: GazetteerShellProps) {
           className={
             fitViewport
               ? "mx-auto flex h-dvh w-full max-w-6xl flex-col overflow-hidden px-4 pt-[max(4.25rem,calc(env(safe-area-inset-top)+3.25rem))] pb-[max(5.75rem,calc(env(safe-area-inset-bottom)+4.75rem))] sm:px-8 sm:pt-6 sm:pb-24"
-              : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-20 pb-32 sm:px-8 sm:pt-24"
+              : "mx-auto min-h-dvh w-full max-w-4xl px-4 pt-[max(5rem,calc(env(safe-area-inset-top)+3.5rem))] pb-[max(8rem,calc(env(safe-area-inset-bottom)+6.5rem))] sm:px-8 sm:pt-24 sm:pb-32"
           }
         >
           {children}

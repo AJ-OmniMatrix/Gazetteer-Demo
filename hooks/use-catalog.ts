@@ -86,7 +86,19 @@ export function useCatalog(initialData?: CatalogPayload) {
       toast.error(err instanceof Error ? err.message : "Failed to undo visit")
     },
     onSuccess: (_data, place) => {
-      toast.info(`Removed ${place.name} from your list`)
+      toast.info(`Removed ${place.name} from your list`, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            const idempotencyKey = `undo-restore-${place.id}-${Date.now()}`
+            checkInMutation.mutate({
+              place,
+              source: "list",
+              idempotencyKey,
+            })
+          },
+        },
+      })
       queryClient.invalidateQueries({ queryKey: ["catalog"] })
       queryClient.invalidateQueries({ queryKey: ["user-visits"] })
     },

@@ -70,7 +70,7 @@ export function BlurHashImage({
         <div
           className={cn(
             fill ? "absolute inset-0" : "relative size-full",
-            "transition-all duration-300 ease-out motion-reduce:transition-none",
+            "transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
             loaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"
           )}
         >

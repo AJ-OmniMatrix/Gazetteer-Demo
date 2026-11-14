@@ -11,7 +11,6 @@ import {
   MapPin,
   Plus,
   Search,
-  X,
 } from "lucide-react"
 import { searchPlacesAction } from "@/app/actions"
 import { VisitStatusButton } from "@/components/VisitStatusButton"
@@ -37,6 +36,7 @@ import {
   ROW_STAGGER,
 } from "@/lib/motion"
 import type { PlaceSummary, VisitSource } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 function formatDistanceKm(distanceKm: number): string {
   if (distanceKm < 0.1) {
@@ -54,39 +54,22 @@ function inferDefaultCoordinates(places: PlaceSummary[]): {
 } {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase()
-    if (
-      tz.includes("calcutta") ||
-      tz.includes("kolkata") ||
-      tz.includes("india")
-    ) {
-      const match = places.find((p) => p.countryCode === "IN")
-      if (match) {
-        return { lat: match.lat, lng: match.lng }
-      }
-    }
-    if (tz.includes("tokyo") || tz.includes("japan")) {
-      const match = places.find((p) => p.countryCode === "JP")
-      if (match) {
-        return { lat: match.lat, lng: match.lng }
-      }
-    }
-    if (tz.includes("paris") || tz.includes("france")) {
-      const match = places.find((p) => p.countryCode === "FR")
-      if (match) {
-        return { lat: match.lat, lng: match.lng }
-      }
-    }
-    if (tz.includes("zurich") || tz.includes("swiss")) {
-      const match = places.find((p) => p.countryCode === "CH")
-      if (match) {
-        return { lat: match.lat, lng: match.lng }
-      }
-    }
+    const match = places.find(
+      (p) =>
+        ((tz.includes("india") || tz.includes("kolkata")) &&
+          p.countryCode === "IN") ||
+        ((tz.includes("tokyo") || tz.includes("japan")) &&
+          p.countryCode === "JP") ||
+        ((tz.includes("paris") || tz.includes("france")) &&
+          p.countryCode === "FR") ||
+        ((tz.includes("zurich") || tz.includes("swiss")) &&
+          p.countryCode === "CH")
+    )
+    if (match) return { lat: match.lat, lng: match.lng }
   } catch {}
-  if (places.length > 0) {
-    return { lat: places[0].lat, lng: places[0].lng }
-  }
-  return { lat: 26.9124, lng: 75.7873 }
+  return places[0]
+    ? { lat: places[0].lat, lng: places[0].lng }
+    : { lat: 26.9124, lng: 75.7873 }
 }
 
 async function resolveCityName(
@@ -296,16 +279,15 @@ export function FloatingDock({
           <AnimatePresence mode="popLayout" initial={false}>
             {!expanded ? (
               <motion.div
-                key="collapsed"
-                initial={{ opacity: 0, scale: 0.95 }}
+                key="list"
+                initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
                   opacity: 0,
-                  scale: 0.95,
+                  scale: 0.92,
                   transition: { duration: DURATION_EXIT, ease: EASE_IN },
                 }}
                 transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex items-center gap-1"
               >
                 <Button
                   variant="ghost"
@@ -317,45 +299,18 @@ export function FloatingDock({
                 >
                   <ListCheck className="size-5" />
                 </Button>
-
-                <motion.div
-                  animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
-                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                >
-                  <Button
-                    size="icon-lg"
-                    className="size-11 rounded-full shadow-sm"
-                    aria-label="Expand add location options"
-                    aria-expanded={expanded}
-                    onClick={() => toggleExpanded(true)}
-                  >
-                    <Plus className="size-5" />
-                  </Button>
-                </motion.div>
-
-                <Button
-                  variant="ghost"
-                  size="icon-lg"
-                  className="size-11 rounded-full"
-                  aria-label="Explore places"
-                  nativeButton={false}
-                  render={<Link href="/explore" prefetch={true} />}
-                >
-                  <Compass className="size-5" />
-                </Button>
               </motion.div>
             ) : (
               <motion.div
-                key="expanded"
-                initial={{ opacity: 0, scale: 0.95 }}
+                key="gps"
+                initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
                   opacity: 0,
-                  scale: 0.95,
+                  scale: 0.92,
                   transition: { duration: DURATION_EXIT, ease: EASE_IN },
                 }}
                 transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                className="flex items-center gap-1"
               >
                 <Button
                   variant="secondary"
@@ -370,7 +325,69 @@ export function FloatingDock({
                 >
                   <MapPin className="size-5" />
                 </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
+          <motion.div
+            animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
+            transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+          >
+            <Button
+              variant={expanded ? "ghost" : "default"}
+              size="icon-lg"
+              className={cn("size-11 rounded-full", !expanded && "shadow-sm")}
+              aria-label={
+                expanded ? "Close add menu" : "Expand add location options"
+              }
+              aria-expanded={expanded}
+              onClick={() => toggleExpanded(!expanded)}
+            >
+              <motion.div
+                animate={{ rotate: expanded ? 45 : 0 }}
+                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+              >
+                <Plus className="size-5" />
+              </motion.div>
+            </Button>
+          </motion.div>
+
+          <AnimatePresence mode="popLayout" initial={false}>
+            {!expanded ? (
+              <motion.div
+                key="explore"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.92,
+                  transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                }}
+                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  className="size-11 rounded-full"
+                  aria-label="Explore places"
+                  nativeButton={false}
+                  render={<Link href="/explore" prefetch={true} />}
+                >
+                  <Compass className="size-5" />
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="search"
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.92,
+                  transition: { duration: DURATION_EXIT, ease: EASE_IN },
+                }}
+                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+              >
                 <Button
                   variant="secondary"
                   size="icon-lg"
@@ -383,21 +400,6 @@ export function FloatingDock({
                 >
                   <Search className="size-5" />
                 </Button>
-
-                <motion.div
-                  animate={hasToggled ? { scaleX: [1, 1.12, 1] } : undefined}
-                  transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
-                >
-                  <Button
-                    variant="ghost"
-                    size="icon-lg"
-                    className="size-11 rounded-full"
-                    aria-label="Close add menu"
-                    onClick={() => toggleExpanded(false)}
-                  >
-                    <X className="size-5" />
-                  </Button>
-                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -421,7 +423,7 @@ export function FloatingDock({
           </DrawerHeader>
           <div className="space-y-4 px-4 pb-4">
             <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/40 p-3">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                   {locating ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -429,7 +431,7 @@ export function FloatingDock({
                     <MapPin className="size-4" />
                   )}
                 </div>
-                <div className="flex flex-col min-w-0">
+                <div className="flex min-w-0 flex-col">
                   <span className="truncate text-sm font-medium text-foreground">
                     {locating
                       ? "Scanning GPS..."
@@ -448,7 +450,7 @@ export function FloatingDock({
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 shrink-0 rounded-full px-3 text-xs"
+                className="h-10 shrink-0 rounded-full px-3.5 text-xs"
                 onClick={detectLocation}
                 disabled={locating}
               >

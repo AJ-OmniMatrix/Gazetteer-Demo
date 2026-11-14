@@ -109,6 +109,7 @@ export async function checkInAction(
     }
     const result = await checkInPlace(user.id, placeId, source, idempotencyKey)
     revalidatePath("/list")
+    revalidatePath("/explore")
     revalidatePath("/")
     return { ok: true, alreadyVisited: result.alreadyVisited }
   } catch (error) {
@@ -132,6 +133,7 @@ export async function undoCheckInAction(
     }
     await undoCheckIn(user.id, placeId)
     revalidatePath("/list")
+    revalidatePath("/explore")
     revalidatePath("/")
     return { ok: true }
   } catch (error) {

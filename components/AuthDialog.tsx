@@ -152,7 +152,7 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
               type="button"
               onClick={() => setTab("signin")}
               className={cn(
-                "flex h-8 items-center justify-center rounded-xl text-xs font-medium transition-all duration-150",
+                "flex h-10 items-center justify-center rounded-xl text-xs font-medium transition-[background-color,color,box-shadow] duration-150 active:scale-[0.97]",
                 tab === "signin"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -164,7 +164,7 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
               type="button"
               onClick={() => setTab("signup")}
               className={cn(
-                "flex h-8 items-center justify-center rounded-xl text-xs font-medium transition-all duration-150",
+                "flex h-10 items-center justify-center rounded-xl text-xs font-medium transition-[background-color,color,box-shadow] duration-150 active:scale-[0.97]",
                 tab === "signup"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
