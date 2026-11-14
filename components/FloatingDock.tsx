@@ -38,6 +38,57 @@ import {
 } from "@/lib/motion"
 import type { PlaceSummary, VisitSource } from "@/lib/types"
 
+function formatDistanceKm(distanceKm: number): string {
+  if (distanceKm < 0.1) {
+    return "< 0.1 km"
+  }
+  if (distanceKm < 100) {
+    return `${distanceKm.toFixed(1)} km`
+  }
+  return `${Math.round(distanceKm).toLocaleString()} km`
+}
+
+function inferDefaultCoordinates(places: PlaceSummary[]): {
+  lat: number
+  lng: number
+} {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone.toLowerCase()
+    if (
+      tz.includes("calcutta") ||
+      tz.includes("kolkata") ||
+      tz.includes("india")
+    ) {
+      const match = places.find((p) => p.countryCode === "IN")
+      if (match) {
+        return { lat: match.lat, lng: match.lng }
+      }
+    }
+    if (tz.includes("tokyo") || tz.includes("japan")) {
+      const match = places.find((p) => p.countryCode === "JP")
+      if (match) {
+        return { lat: match.lat, lng: match.lng }
+      }
+    }
+    if (tz.includes("paris") || tz.includes("france")) {
+      const match = places.find((p) => p.countryCode === "FR")
+      if (match) {
+        return { lat: match.lat, lng: match.lng }
+      }
+    }
+    if (tz.includes("zurich") || tz.includes("swiss")) {
+      const match = places.find((p) => p.countryCode === "CH")
+      if (match) {
+        return { lat: match.lat, lng: match.lng }
+      }
+    }
+  } catch {}
+  if (places.length > 0) {
+    return { lat: places[0].lat, lng: places[0].lng }
+  }
+  return { lat: 26.9124, lng: 75.7873 }
+}
+
 interface FloatingDockProps {
   places: PlaceSummary[]
   visitedSet: Set<number>
@@ -68,7 +119,7 @@ export function FloatingDock({
         map.set(p.cityName, { label: p.cityName, lat: p.lat, lng: p.lng })
       }
     }
-    return Array.from(map.values()).slice(0, 4)
+    return Array.from(map.values())
   }, [places])
 
   const toggleExpanded = (next: boolean) => {
@@ -77,7 +128,7 @@ export function FloatingDock({
   }
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
-    null
+    () => inferDefaultCoordinates(places)
   )
   const [locating, setLocating] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
@@ -119,27 +170,38 @@ export function FloatingDock({
   }, [expanded])
 
   const detectLocation = () => {
-    if (!("geolocation" in navigator)) {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setGeoError(
-        "Geolocation is unavailable in this browser. Pick a demo city below."
+        "Geolocation is unavailable in this browser. Showing nearest catalogued spots."
       )
+      setCoords((prev) => prev ?? inferDefaultCoordinates(places))
       return
     }
     setLocating(true)
     setGeoError(null)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
-        setLocating(false)
-      },
-      () => {
-        setGeoError(
-          "Location permission denied or unavailable. Try a sample city below."
-        )
-        setLocating(false)
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    )
+
+    const onSuccess = (pos: GeolocationPosition) => {
+      setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+      setLocating(false)
+      setGeoError(null)
+    }
+
+    const onFallback = () => {
+      navigator.geolocation.getCurrentPosition(
+        onSuccess,
+        () => {
+          setLocating(false)
+          setCoords((prev) => prev ?? inferDefaultCoordinates(places))
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+      )
+    }
+
+    navigator.geolocation.getCurrentPosition(onSuccess, onFallback, {
+      enableHighAccuracy: false,
+      timeout: 5000,
+      maximumAge: 300000,
+    })
   }
 
   useEffect(() => {
@@ -160,7 +222,7 @@ export function FloatingDock({
   }, [searchTerm])
 
   const nearestPlaces = useMemo(
-    () => (coords ? kdTree.nearest(coords, 5) : []),
+    () => (coords ? kdTree.nearest(coords, 8) : []),
     [coords, kdTree]
   )
 
@@ -268,9 +330,7 @@ export function FloatingDock({
                   onClick={() => {
                     setExpanded(false)
                     onGpsOpenChange(true)
-                    if (!coords && !locating) {
-                      detectLocation()
-                    }
+                    detectLocation()
                   }}
                 >
                   <MapPin className="size-5" />
@@ -340,20 +400,26 @@ export function FloatingDock({
                 )}
                 <span>{locating ? "Locating..." : "Use My GPS"}</span>
               </Button>
-              {cityPresets.map((preset) => (
-                <Button
-                  key={preset.label}
-                  variant="ghost"
-                  size="sm"
-                  className="h-9 rounded-full text-xs"
-                  onClick={() => {
-                    setGeoError(null)
-                    setCoords({ lat: preset.lat, lng: preset.lng })
-                  }}
-                >
-                  Try {preset.label}
-                </Button>
-              ))}
+              {cityPresets.map((preset) => {
+                const isSelected =
+                  coords !== null &&
+                  Math.abs(coords.lat - preset.lat) < 0.01 &&
+                  Math.abs(coords.lng - preset.lng) < 0.01
+                return (
+                  <Button
+                    key={preset.label}
+                    variant={isSelected ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-9 rounded-full text-xs"
+                    onClick={() => {
+                      setGeoError(null)
+                      setCoords({ lat: preset.lat, lng: preset.lng })
+                    }}
+                  >
+                    {preset.label}
+                  </Button>
+                )
+              })}
             </div>
 
             {coords && (
@@ -371,9 +437,9 @@ export function FloatingDock({
             <div className="max-h-72 space-y-2 overflow-y-auto overscroll-y-contain">
               {nearestPlaces.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">
-                  {coords
-                    ? "No catalogued locations nearby."
-                    : "Detect location or pick a city to find nearby spots."}
+                  {locating
+                    ? "Detecting nearby locations..."
+                    : "No catalogued locations nearby."}
                 </p>
               )}
               <AnimatePresence initial={false}>
@@ -402,9 +468,7 @@ export function FloatingDock({
                           {item.cityName}, {item.countryCode}
                         </span>
                         <span className="font-mono tabular-nums">
-                          {distanceKm < 1
-                            ? `${Math.round(distanceKm * 1000)} m`
-                            : `${distanceKm.toFixed(1)} km`}
+                          {formatDistanceKm(distanceKm)}
                         </span>
                       </div>
                     </div>
