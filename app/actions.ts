@@ -91,6 +91,8 @@ export async function loginOrRegisterAction(
 export async function logoutAction(): Promise<{ ok: boolean }> {
   await destroySession()
   revalidatePath("/", "layout")
+  revalidatePath("/list")
+  revalidatePath("/explore")
   return { ok: true }
 }
 

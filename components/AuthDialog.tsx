@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Code2, Loader2 } from "lucide-react"
+import { AlertCircle, Code2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "cn"
 import {
@@ -122,21 +122,29 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-2">
-          <Button
-            variant="outline"
-            className="h-10 w-full justify-center gap-2 rounded-2xl"
-            disabled={loadingDev !== null || loading}
-            onClick={() => handleDeveloperLogin("dev")}
-          >
-            {loadingDev === "dev" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Code2 className="size-4 text-primary" />
-            )}
-            <span className="font-mono text-xs font-medium">
-              Continue as @dev
-            </span>
-          </Button>
+          <div className="space-y-1.5">
+            <Button
+              variant="outline"
+              className="h-10 w-full justify-center gap-2 rounded-2xl"
+              disabled={loadingDev !== null || loading}
+              onClick={() => handleDeveloperLogin("dev")}
+            >
+              {loadingDev === "dev" ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Code2 className="size-4 text-primary" />
+              )}
+              <span className="font-mono text-xs font-medium">
+                Continue as @dev
+              </span>
+            </Button>
+            <div className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-center">
+              <AlertCircle className="size-3.5 shrink-0 text-amber-500" />
+              <p className="font-mono text-[11px] text-amber-900/80 dark:text-amber-200/80">
+                @dev data resets on session close / logging out
+              </p>
+            </div>
+          </div>
 
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">

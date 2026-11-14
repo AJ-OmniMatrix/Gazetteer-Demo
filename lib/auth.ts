@@ -2,6 +2,8 @@ import crypto from "node:crypto"
 import { cookies } from "next/headers"
 import type { RowDataPacket } from "mysql2"
 import { getPool } from "@/db"
+import { resetUserMemoryData } from "@/db/memory"
+import { resetUserVisits } from "@/db/queries"
 import { SEED_USERS } from "@/db/seed-data"
 import type { User } from "./types"
 
@@ -97,7 +99,10 @@ export async function getSessionUser(): Promise<User | null> {
   }
 }
 
-export async function createSession(userId: number): Promise<string> {
+export async function createSession(
+  userId: number,
+  isSessionOnly = false
+): Promise<string> {
   const token = crypto.randomBytes(32).toString("hex")
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS)
 
@@ -120,8 +125,8 @@ export async function createSession(userId: number): Promise<string> {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    expires: expiresAt,
     path: "/",
+    ...(isSessionOnly ? {} : { expires: expiresAt }),
   })
 
   return token
@@ -132,10 +137,36 @@ export async function destroySession(): Promise<void> {
   const token = cookieStore.get(SESSION_COOKIE)?.value
   if (token) {
     if (!hasDatabase()) {
-      getMemorySessions().delete(token)
+      const memSessions = getMemorySessions()
+      const session = memSessions.get(token)
+      if (session) {
+        const user = getMemoryUsers().find((u) => u.id === session.userId)
+        if (user?.isDeveloper || user?.id === 1 || user?.handle === "dev") {
+          resetUserMemoryData(session.userId)
+        }
+      }
+      memSessions.delete(token)
     } else {
       try {
         const pool = getPool()
+        const [rows] = await pool.execute<RowDataPacket[]>(
+          `SELECT u.id, u.is_developer, u.handle
+           FROM sessions s
+           JOIN users u ON u.id = s.user_id
+           WHERE s.session_token = ?
+           LIMIT 1`,
+          [token]
+        )
+        if (rows.length > 0) {
+          const row = rows[0]
+          const isDev =
+            Boolean(row.is_developer) ||
+            String(row.handle).toLowerCase() === "dev" ||
+            Number(row.id) === 1
+          if (isDev) {
+            await pool.execute(`DELETE FROM visits WHERE user_id = ?`, [row.id])
+          }
+        }
         await pool.execute(`DELETE FROM sessions WHERE session_token = ?`, [
           token,
         ])
@@ -166,7 +197,8 @@ export async function developerLogin(handle = "dev"): Promise<User> {
     user.displayName = "@dev"
     user.handle = "dev"
     user.isDeveloper = true
-    await createSession(user.id)
+    await resetUserVisits(user.id)
+    await createSession(user.id, true)
     return user
   }
 
@@ -197,14 +229,16 @@ export async function developerLogin(handle = "dev"): Promise<User> {
     )
     if (newRows.length > 0) {
       const u = mapUser(newRows[0])
-      await createSession(u.id)
+      await resetUserVisits(u.id)
+      await createSession(u.id, true)
       return u
     }
     throw new Error("Developer account @dev not found")
   }
 
   const user = mapUser(rows[0])
-  await createSession(user.id)
+  await resetUserVisits(user.id)
+  await createSession(user.id, true)
   return user
 }
 

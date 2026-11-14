@@ -4,6 +4,7 @@ import {
   checkInMemory,
   getMemoryCatalogData,
   getUserVisitsMemory,
+  resetUserMemoryData,
   searchMemoryPlaces,
   undoCheckInMemory,
 } from "./memory"
@@ -184,6 +185,15 @@ export async function checkInPlace(
     [userId, placeId, source, idempotencyKey]
   )
   return { alreadyVisited: result.affectedRows === 0 }
+}
+
+export async function resetUserVisits(userId: number): Promise<void> {
+  if (!hasDatabase()) {
+    resetUserMemoryData(userId)
+    return
+  }
+  const pool = getPool()
+  await pool.execute(`DELETE FROM visits WHERE user_id = ?`, [userId])
 }
 
 export async function undoCheckIn(

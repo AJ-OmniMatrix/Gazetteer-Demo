@@ -198,6 +198,21 @@ export function checkInMemory(
   return { alreadyVisited: false }
 }
 
+export function resetUserMemoryData(userId: number): void {
+  const userMap = getVisitsByUser()
+  userMap.delete(userId)
+
+  const log = getVisitsLog()
+  for (let i = log.length - 1; i >= 0; i--) {
+    if (log[i].userId === userId) {
+      log.splice(i, 1)
+    }
+  }
+
+  const keys = getKeysSet()
+  keys.clear()
+}
+
 export function undoCheckInMemory(userId: number, placeId: number): void {
   const userMap = getVisitsByUser()
   const userVisits = userMap.get(userId)
