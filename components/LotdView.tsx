@@ -212,15 +212,21 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
         data-tour="lotd"
         className="flex shrink-0 flex-col items-center gap-1 text-center"
       >
-        <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase tabular-nums sm:text-xs">
+        <motion.p
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.18 }}
+          className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase tabular-nums sm:text-xs"
+        >
           {todayLabel}
-        </p>
+        </motion.p>
         <BlurText
           as="h1"
           text="Location of the Day"
           trigger="load"
           animateBy="words"
           delay={90}
+          startDelay={0.24}
           className="justify-center text-center font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl lg:text-[2.75rem]"
         />
       </header>
@@ -234,7 +240,7 @@ export function LotdView({ layoutSeed, todayLabel }: LotdViewProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.16 }}
+        transition={{ duration: DURATION_ENTER, ease: EASE_OUT, delay: 0.32 }}
         className="mt-2 flex shrink-0 flex-col justify-between gap-3 sm:mt-3 sm:flex-row sm:items-center sm:gap-6"
       >
         <div className="min-w-0 space-y-1">

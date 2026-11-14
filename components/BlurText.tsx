@@ -9,6 +9,7 @@ export interface BlurTextProps {
   text: string
   as?: ElementType
   delay?: number
+  startDelay?: number
   className?: string
   trigger?: "load" | "view" | "hover" | "click"
   animateBy?: "words" | "letters"
@@ -18,6 +19,7 @@ export default function BlurText({
   text,
   as: Component = "h1",
   delay = ROW_STAGGER * 1000,
+  startDelay = 0,
   className,
 }: BlurTextProps) {
   const reducedMotion = useReducedMotion()
@@ -36,7 +38,7 @@ export default function BlurText({
             transition={{
               duration: DURATION_ENTER,
               ease: EASE_OUT,
-              delay: i * staggerSec,
+              delay: startDelay + i * staggerSec,
             }}
             className="inline-block"
           >
