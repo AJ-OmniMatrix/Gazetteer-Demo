@@ -113,12 +113,40 @@ export function FloatingDock({
 }: FloatingDockProps) {
   const [expanded, setExpanded] = useState(false)
   const [hasToggled, setHasToggled] = useState(false)
+  const [hoveredNav, setHoveredNav] = useState<"list" | "explore" | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dockRef = useRef<HTMLDivElement>(null)
 
+  const handleNavMouseEnter = (nav: "list" | "explore") => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+    }
+    hoverTimerRef.current = setTimeout(() => {
+      setHoveredNav(nav)
+    }, 1200)
+  }
+
+  const handleNavMouseLeave = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    setHoveredNav(null)
+  }
+
   const toggleExpanded = (next: boolean) => {
+    handleNavMouseLeave()
     setHasToggled(true)
     setExpanded(next)
   }
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current)
+      }
+    }
+  }, [])
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     () => inferDefaultCoordinates(places)
@@ -282,6 +310,7 @@ export function FloatingDock({
             {!expanded ? (
               <motion.div
                 key="list"
+                layout
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
@@ -289,19 +318,50 @@ export function FloatingDock({
                   scale: 0.92,
                   transition: { duration: DURATION_EXIT, ease: EASE_IN },
                 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                transition={{
+                  duration: DURATION_ENTER,
+                  ease: EASE_OUT,
+                  layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
+                }}
+                onMouseEnter={() => handleNavMouseEnter("list")}
+                onMouseLeave={handleNavMouseLeave}
               >
                 <Button
                   variant="ghost"
-                  size="icon-lg"
-                  className="size-11 rounded-full"
+                  className="h-11 rounded-full px-3 transition-colors"
+                  onFocus={() => handleNavMouseEnter("list")}
+                  onBlur={handleNavMouseLeave}
                   aria-label="Personal catalogue"
                   nativeButton={false}
                   render={
                     <Link href={user ? "/list" : "/signin"} prefetch={true} />
                   }
                 >
-                  <ListCheck className="size-5" />
+                  <ListCheck className="size-5 shrink-0" />
+                  <AnimatePresence>
+                    {hoveredNav === "list" && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+                        animate={{ opacity: 1, width: "auto", marginLeft: 6 }}
+                        exit={{
+                          opacity: 0,
+                          width: 0,
+                          marginLeft: 0,
+                          transition: {
+                            duration: DURATION_EXIT,
+                            ease: EASE_IN_OUT,
+                          },
+                        }}
+                        transition={{
+                          duration: DURATION_ENTER,
+                          ease: EASE_OUT,
+                        }}
+                        className="overflow-hidden text-xs font-medium whitespace-nowrap"
+                      >
+                        List
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </Button>
               </motion.div>
             ) : (
@@ -360,6 +420,7 @@ export function FloatingDock({
             {!expanded ? (
               <motion.div
                 key="explore"
+                layout
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{
@@ -367,17 +428,48 @@ export function FloatingDock({
                   scale: 0.92,
                   transition: { duration: DURATION_EXIT, ease: EASE_IN },
                 }}
-                transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
+                transition={{
+                  duration: DURATION_ENTER,
+                  ease: EASE_OUT,
+                  layout: { duration: DURATION_ENTER, ease: EASE_IN_OUT },
+                }}
+                onMouseEnter={() => handleNavMouseEnter("explore")}
+                onMouseLeave={handleNavMouseLeave}
               >
                 <Button
                   variant="ghost"
-                  size="icon-lg"
-                  className="size-11 rounded-full"
+                  className="h-11 rounded-full px-3 transition-colors"
+                  onFocus={() => handleNavMouseEnter("explore")}
+                  onBlur={handleNavMouseLeave}
                   aria-label="Explore places"
                   nativeButton={false}
                   render={<Link href="/explore" prefetch={true} />}
                 >
-                  <Compass className="size-5" />
+                  <Compass className="size-5 shrink-0" />
+                  <AnimatePresence>
+                    {hoveredNav === "explore" && (
+                      <motion.span
+                        initial={{ opacity: 0, width: 0, marginLeft: 0 }}
+                        animate={{ opacity: 1, width: "auto", marginLeft: 6 }}
+                        exit={{
+                          opacity: 0,
+                          width: 0,
+                          marginLeft: 0,
+                          transition: {
+                            duration: DURATION_EXIT,
+                            ease: EASE_IN_OUT,
+                          },
+                        }}
+                        transition={{
+                          duration: DURATION_ENTER,
+                          ease: EASE_OUT,
+                        }}
+                        className="overflow-hidden text-xs font-medium whitespace-nowrap"
+                      >
+                        Explore
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </Button>
               </motion.div>
             ) : (
