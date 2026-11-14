@@ -8,7 +8,6 @@ import {
   LogIn,
   LogOut,
   Sparkles,
-  User as UserIcon,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -32,7 +31,7 @@ import type { User } from "@/lib/types"
 
 interface TopRightPillProps {
   user: User | null
-  mode: "tidb" | "memory"
+  mode?: "tidb" | "memory"
   visitedCount: number
   helpOpen: boolean
   onHelpOpenChange: (open: boolean) => void
@@ -42,7 +41,6 @@ interface TopRightPillProps {
 
 export function TopRightPill({
   user,
-  mode,
   visitedCount,
   helpOpen,
   onHelpOpenChange,
@@ -121,13 +119,6 @@ export function TopRightPill({
               <DropdownMenuItem render={<Link href="/explore" />}>
                 <Compass />
                 <span>Explore Cities</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <UserIcon />
-                <span>
-                  {mode === "tidb" ? "TiDB Connected" : "In-Memory Demo"}
-                </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
