@@ -1,83 +1,104 @@
-# Gazetteer-Demo
+# Gazetteer
 
-Personal travel catalogue and location tracker built with Next.js, TiDB Cloud, Tailwind CSS, and shadcn/ui.
+A personal travel catalogue for discovering places and keeping a record of the destinations you have visited.
 
-## Setup
+**Live demo:** https://gazetteer-demo.vercel.app/
+
+## What you can do
+
+- **Discover a place:** Browse the featured Location of the Day or explore the catalogue by city and category.
+- **Find places:** Search by place name, city, country, or category.
+- **Check nearby places:** Allow browser location access to see catalogue locations nearest to your current position.
+- **Save your visits:** Sign in and add places to your personal travel list. You can also remove a saved visit.
+- **Track your travels:** View saved places, filter them by city or category, and see a few travel statistics.
+- **Open directions:** Open a place directly in Google Maps.
+
+## How to use Gazetteer
+
+1. Open the [live demo](https://gazetteer-demo.vercel.app/).
+2. Browse the featured location, or open **Explore** to see all catalogued places.
+3. Use search or the city/category filters to find somewhere.
+4. Select **Add** or the check-in action to save a place. For GPS suggestions, allow location permission when your browser asks.
+5. Open **List** to see your saved places and travel statistics.
+
+To save visits, sign in from the app. The demo also provides pre-seeded test accounts (**Aarav Sen** and **Maya Lin**) so you can try the personal-list experience quickly. The custom sign-in flow uses a handle and display name; it is a demo identity flow, not password-based account security. Do not enter sensitive personal information.
+
+## Where the data comes from
+
+The places shown in the demo come from a curated catalogue maintained in `db/seed-data.ts`. Each entry contains details such as its name, city, country, category, description, coordinates, and image references.
+
+Place photos are stored in the repository under `public/images/places/` and served by the application. The app generates a Google Maps link from each place's coordinates.
+
+Gazetteer does **not** currently fetch its catalogue from a live travel or maps API. The search, nearby-place suggestions, and visit tracking operate on the catalogue included in the project.
+
+## Run locally
+
+You need Node.js and npm.
 
 ```bash
-cp .env.example .env.local
+git clone https://github.com/AJ-OmniMatrix/Gazetteer-Demo.git
+cd Gazetteer-Demo
 npm install
 npm run dev
 ```
 
-## Adding Locations & Images
+Open [http://localhost:3000](http://localhost:3000).
 
-Images are stored directly in the repository under `public/images/places/<slug>/` and served statically.
+### Database (optional for local preview)
 
-When adding a location, image dimensions (`width`, `height`) and `blurhash` placeholders are automatically generated via `sharp` and `blurhash`.
+Without a database connection, Gazetteer uses an in-memory fallback so you can run and explore the seeded catalogue locally. Visit data in this mode is temporary and can be lost when the server process restarts.
 
-### Option 1: Interactive CLI (Recommended)
+For persistent data, create a compatible TiDB/MySQL database, copy the example environment file, and add your connection string:
 
-Run the location addition wizard:
+```bash
+cp .env.example .env.local
+```
+
+Set `DATABASE_URL` in `.env.local`, then initialize and seed the database:
+
+```bash
+npm run db:setup
+npm run dev
+```
+
+**Note:** `npm run db:setup` synchronizes the database with the project's seed catalogue. Review `db/setup.ts` before running it against a database that contains data you need to keep; the sync removes place records that are not present in the seed list.
+
+## Add a place
+
+Run the interactive location wizard:
 
 ```bash
 npm run location:add
 ```
 
-Follow the interactive prompts:
+Follow the prompts for the place name, city, country, category, coordinates, description, and image paths. The tool copies images into `public/images/places/`, creates image dimensions and BlurHash placeholders, generates a geohash, and updates `db/seed-data.ts`. If `DATABASE_URL` is configured, it also syncs the new place to the database.
 
-1. **Location name** (e.g., `Senso-ji`)
-2. **City name** (e.g., `Tokyo`)
-3. **Country name** & **2-letter code** (e.g., `Japan`, `JP`)
-4. **Category** (`landmark`, `national_park`, `museum`, `cafe`, `mall`)
-5. **Coordinates** (`lat`, `lng`)
-6. **Description**
-7. **Image file paths**: Paste one or more local image paths separated by commas (e.g., `C:\Photos\sensoji1.jpg, C:\Photos\sensoji2.jpg`), or press Enter if already placed in `public/images/places/<slug>/`.
+The supported categories are currently `landmark`, `national_park`, `museum`, `cafe`, and `mall`.
 
-The script will:
+## Built with
 
-- Copy images to `public/images/places/<slug>/photo-<n>.<ext>`.
-- Read image dimensions and calculate compact BlurHash strings.
-- Compute the 7-character geohash.
-- Update `RAW_PLACES` in `db/seed-data.ts`.
-- Automatically synchronize with TiDB Cloud if `DATABASE_URL` is configured.
+- **Application:** Next.js, React, and TypeScript
+- **Styling and UI:** Tailwind CSS and shadcn/ui
+- **Database:** TiDB Cloud / MySQL through `mysql2`
+- **Client-side data:** TanStack Query
+- **Images:** Sharp and BlurHash
+- **Motion:** Motion and GSAP
 
-### Option 2: CLI with Flags
+The project also uses a few focused data structures and algorithms for prefix search, nearby-place lookup, and visit statistics. Their implementation is documented separately in **[ADS-Report.md](./ADS-Report.md)**.
 
-You can also pass all parameters in a single command:
+## Useful commands
 
-```bash
-npm run location:add -- --name "Senso-ji" --city "Tokyo" --country "Japan" --code "JP" --category "landmark" --lat 35.714765 --lng 139.796655 --desc "Ancient Buddhist temple located in Asakusa." --images "C:/path/to/img1.jpg,C:/path/to/img2.jpg"
-```
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the development server |
+| `npm run build` | Build the production application |
+| `npm run start` | Run the production build |
+| `npm run db:setup` | Initialize and sync the database with seed data |
+| `npm run location:add` | Add a place using the interactive wizard |
+| `npm run typecheck` | Run TypeScript type checking |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run the data-structure and algorithm tests |
 
-### Option 3: Manual Addition
+---
 
-1. Create a directory for your place:
-   ```bash
-   mkdir -p public/images/places/<place-slug>
-   ```
-2. Copy your image files into `public/images/places/<place-slug>/` (e.g., `photo-1.jpg`, `photo-2.jpg`).
-3. Add the place entry into `RAW_PLACES` in `db/seed-data.ts` with image paths, dimensions, and blurhash.
-4. Sync the database:
-   ```bash
-   npm run db:setup
-   ```
-
-## Database Setup
-
-To reset or sync the database with the seed catalogue:
-
-```bash
-npm run db:setup
-```
-
-## Scripts
-
-- `npm run dev`: Start Next.js development server
-- `npm run build`: Build production Next.js application
-- `npm run db:setup`: Initialize TiDB database schema and sync seed data
-- `npm run location:add`: Interactive wizard to add a new location with automatic image and blurhash processing
-- `npm run format`: Format codebase with Prettier
-- `npm run typecheck`: Run TypeScript type checking
-- `npm run lint`: Run ESLint checks
-- `npm test`: Run ADS (Algorithms & Data Structures) test suite
+Made as a simple way to catalogue places and keep a personal record of travel.
