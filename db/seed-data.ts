@@ -313,41 +313,7 @@ export const RAW_PLACES: RawPlaceInput[] = [
       }
     ]
   },
-  {
-    "city": "Jaipur",
-    "country": "India",
-    "countryCode": "IN",
-    "category": "cafe",
-    "name": "Tapri Central",
-    "slug": "tapri-central",
-    "description": "Rooftop chai house overlooking Central Park.",
-    "lat": 26.9056,
-    "lng": 75.8054,
-    "featuredOffsetDays": null,
-    "photos": [
-      {
-        "imageUrl": "/images/places/tapri-central/photo-1.jpg",
-        "blurhash": "LZGSy3oz~qt7x^aet7fP_3fR$#of",
-        "width": 235,
-        "height": 251,
-        "sortOrder": 0
-      },
-      {
-        "imageUrl": "/images/places/tapri-central/photo-2.jpg",
-        "blurhash": "LeGlS4oykVoz?wozjFae_Nt7kCof",
-        "width": 1280,
-        "height": 960,
-        "sortOrder": 1
-      },
-      {
-        "imageUrl": "/images/places/tapri-central/photo-3.jpg",
-        "blurhash": "L00000fQfQfQfQfQfQfQfQfQfQfQ",
-        "width": 1280,
-        "height": 629,
-        "sortOrder": 2
-      }
-    ]
-  },
+
   {
     "city": "Jaipur",
     "country": "India",
@@ -488,41 +454,7 @@ export const RAW_PLACES: RawPlaceInput[] = [
       }
     ]
   },
-  {
-    "city": "Delhi",
-    "country": "India",
-    "countryCode": "IN",
-    "category": "cafe",
-    "name": "Blue Tokai Khan Market",
-    "slug": "blue-tokai-khan-market",
-    "description": "Specialty Indian coffee roastery and brew bar in Khan Market.",
-    "lat": 28.6003,
-    "lng": 77.2274,
-    "featuredOffsetDays": null,
-    "photos": [
-      {
-        "imageUrl": "/images/places/blue-tokai-khan-market/photo-1.jpg",
-        "blurhash": "LFGR6b?b%$t7^i?bbw%Mys%g?GaK",
-        "width": 1598,
-        "height": 1200,
-        "sortOrder": 0
-      },
-      {
-        "imageUrl": "/images/places/blue-tokai-khan-market/photo-2.jpg",
-        "blurhash": "LNCffQsV2BSL{_o2A;WqBWWp$6o0",
-        "width": 496,
-        "height": 332,
-        "sortOrder": 1
-      },
-      {
-        "imageUrl": "/images/places/blue-tokai-khan-market/photo-3.jpg",
-        "blurhash": "LlPj#;t8XVxZ}+WXRja#xsnhr:fk",
-        "width": 1157,
-        "height": 1200,
-        "sortOrder": 2
-      }
-    ]
-  },
+
   {
     "city": "Delhi",
     "country": "India",
@@ -908,27 +840,7 @@ export const RAW_PLACES: RawPlaceInput[] = [
       }
     ]
   },
-  {
-    "city": "Bengaluru",
-    "country": "India",
-    "countryCode": "IN",
-    "category": "cafe",
-    "name": "Third Wave Coffee Koramangala",
-    "slug": "third-wave-coffee-koramangala",
-    "description": "Popular specialty cafe with custom pour-over brews in Koramangala.",
-    "lat": 12.9344,
-    "lng": 77.6186,
-    "featuredOffsetDays": null,
-    "photos": [
-      {
-        "imageUrl": "/images/places/third-wave-coffee-koramangala/photo-1.jpg",
-        "blurhash": "LPK^]R~ou5xH4oIAf-of9t9Fnkt6",
-        "width": 800,
-        "height": 1200,
-        "sortOrder": 0
-      }
-    ]
-  },
+
   {
     "city": "Bengaluru",
     "country": "India",
