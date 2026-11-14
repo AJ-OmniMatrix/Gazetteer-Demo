@@ -318,9 +318,9 @@ export function ScrollReveal({
       <div
         ref={bandRef}
         aria-hidden="true"
-        className="fixed inset-x-0 bottom-0 z-0 flex items-center justify-center bg-accent px-4 pt-8 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1.25rem))] text-white sm:px-8 sm:pt-10 sm:pb-11"
+        className="fixed inset-x-0 bottom-0 z-0 flex items-center justify-center bg-accent px-4 pt-8 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1.25rem))] text-primary-foreground sm:px-8 sm:pt-10 sm:pb-11"
       >
-        <span className="origin-center scale-y-[1.24] pl-[0.08em] font-heading text-[2.75rem] leading-[0.9] font-semibold tracking-[0.08em] whitespace-nowrap text-white uppercase select-none sm:text-[5.25rem] lg:text-[8.75rem] xl:text-[11rem] 2xl:text-[13rem]">
+        <span className="origin-center scale-y-[1.24] pl-[0.08em] font-heading text-[2.75rem] leading-[0.9] font-semibold tracking-[0.08em] whitespace-nowrap text-primary-foreground uppercase select-none sm:text-[5.25rem] lg:text-[8.75rem] xl:text-[11rem] 2xl:text-[13rem]">
           Gazetteer
         </span>
       </div>
