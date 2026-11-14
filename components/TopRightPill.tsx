@@ -48,12 +48,14 @@ export function TopRightPill({
   onLogout,
 }: TopRightPillProps) {
   const initials = user
-    ? user.displayName
-        .split(" ")
-        .map((part) => part[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
+    ? user.isDeveloper
+      ? "DEV"
+      : user.displayName
+          .split(" ")
+          .map((part) => part[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()
     : "G"
 
   return (
@@ -94,16 +96,17 @@ export function TopRightPill({
                 <DropdownMenuLabel className="flex flex-col gap-0.5">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground">
-                      {user.displayName}
+                      {user.isDeveloper ? "@dev" : user.displayName}
                     </span>
                     {user.isDeveloper && (
-                      <span className="py-0.2 rounded bg-primary/15 px-1 font-mono text-[9px] font-semibold text-primary uppercase">
-                        Dev
+                      <span className="rounded bg-primary/15 px-1 py-0.5 font-mono text-[9px] font-semibold text-primary uppercase">
+                        Developer
                       </span>
                     )}
                   </div>
                   <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                    @{user.handle} · {visitedCount} visited
+                    {user.isDeveloper ? "Developer" : `@${user.handle}`} ·{" "}
+                    {visitedCount} visited
                   </span>
                 </DropdownMenuLabel>
               </DropdownMenuGroup>

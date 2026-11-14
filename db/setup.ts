@@ -41,6 +41,7 @@ async function main() {
          VALUES (?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            display_name = VALUES(display_name),
+           handle = VALUES(handle),
            avatar_url = VALUES(avatar_url),
            avatar_blurhash = VALUES(avatar_blurhash),
            is_developer = VALUES(is_developer)`,

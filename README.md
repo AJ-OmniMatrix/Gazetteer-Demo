@@ -21,7 +21,7 @@ A personal travel catalogue for discovering places and keeping a record of the d
 4. Select **Add** or the check-in action to save a place. For GPS suggestions, allow location permission when your browser asks.
 5. Open **List** to see your saved places and travel statistics.
 
-To save visits, sign in from the app. The demo also provides pre-seeded test accounts (**Aarav Sen** and **Maya Lin**) so you can try the personal-list experience quickly. The custom sign-in flow uses a handle and display name; it is a demo identity flow, not password-based account security. Do not enter sensitive personal information.
+To save visits, sign in from the app. The demo also provides a quick developer account (**@dev**) so you can try the personal-list experience quickly. The custom sign-in flow uses a handle and display name; it is a demo identity flow, not password-based account security. Do not enter sensitive personal information.
 
 ## Where the data comes from
 
@@ -88,16 +88,16 @@ The project also uses a few focused data structures and algorithms for prefix se
 
 ## Useful commands
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start the development server |
-| `npm run build` | Build the production application |
-| `npm run start` | Run the production build |
-| `npm run db:setup` | Initialize and sync the database with seed data |
-| `npm run location:add` | Add a place using the interactive wizard |
-| `npm run typecheck` | Run TypeScript type checking |
-| `npm run lint` | Run ESLint |
-| `npm test` | Run the data-structure and algorithm tests |
+| Command                | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
+| `npm run dev`          | Start the development server                    |
+| `npm run build`        | Build the production application                |
+| `npm run start`        | Run the production build                        |
+| `npm run db:setup`     | Initialize and sync the database with seed data |
+| `npm run location:add` | Add a place using the interactive wizard        |
+| `npm run typecheck`    | Run TypeScript type checking                    |
+| `npm run lint`         | Run ESLint                                      |
+| `npm test`             | Run the data-structure and algorithm tests      |
 
 ---
 

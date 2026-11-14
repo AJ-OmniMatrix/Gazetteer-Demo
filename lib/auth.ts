@@ -44,13 +44,17 @@ function hasDatabase(): boolean {
 }
 
 function mapUser(row: RowDataPacket): User {
+  const isDev =
+    Boolean(row.is_developer) ||
+    String(row.handle).toLowerCase() === "dev" ||
+    Number(row.id) === 1
   return {
     id: Number(row.id),
-    displayName: String(row.display_name),
-    handle: String(row.handle),
+    displayName: isDev ? "@dev" : String(row.display_name),
+    handle: isDev ? "dev" : String(row.handle),
     avatarUrl: String(row.avatar_url),
     avatarBlurhash: String(row.avatar_blurhash),
-    isDeveloper: Boolean(row.is_developer),
+    isDeveloper: isDev,
   }
 }
 
@@ -142,49 +146,61 @@ export async function destroySession(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE)
 }
 
-export async function developerLogin(handle: string): Promise<User> {
-  const cleanHandle = handle.toLowerCase() === "aarav" ? "dev" : handle
+export async function developerLogin(handle = "dev"): Promise<User> {
+  const cleanHandle = handle.trim().toLowerCase() === "dev" ? "dev" : "dev"
   if (!hasDatabase()) {
-    const user = getMemoryUsers().find(
-      (u) =>
-        u.handle.toLowerCase() === cleanHandle.toLowerCase() ||
-        (cleanHandle === "dev" && u.isDeveloper)
+    let user = getMemoryUsers().find(
+      (u) => u.handle === cleanHandle || u.isDeveloper
     )
     if (!user) {
-      throw new Error(`Developer account @${cleanHandle} not found`)
+      user = {
+        id: 1,
+        displayName: "@dev",
+        handle: "dev",
+        avatarUrl: "/images/avatar.png",
+        avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
+        isDeveloper: true,
+      }
+      getMemoryUsers().push(user)
     }
+    user.displayName = "@dev"
+    user.handle = "dev"
+    user.isDeveloper = true
     await createSession(user.id)
     return user
   }
 
   const pool = getPool()
+  await pool.execute(
+    `UPDATE users
+     SET display_name = '@dev', handle = 'dev', is_developer = 1
+     WHERE id = 1 OR LOWER(handle) = 'dev'`
+  )
+
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
      FROM users
-     WHERE (LOWER(handle) = LOWER(?) OR (LOWER(?) = 'dev' AND is_developer = 1))
+     WHERE id = 1 OR LOWER(handle) = 'dev'
      ORDER BY is_developer DESC, id ASC
-     LIMIT 1`,
-    [cleanHandle, cleanHandle]
+     LIMIT 1`
   )
 
   if (rows.length === 0) {
-    if (cleanHandle.toLowerCase() === "dev") {
-      await pool.execute(
-        `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash, is_developer)
-         VALUES (1, '@dev', 'dev', '/images/avatar.png', 'L~N+^As.V?j[~VayaefQIqWCozaz', 1)
-         ON DUPLICATE KEY UPDATE display_name = '@dev', handle = 'dev', is_developer = 1`
-      )
-      const [newRows] = await pool.execute<RowDataPacket[]>(
-        `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
-         FROM users WHERE LOWER(handle) = 'dev' LIMIT 1`
-      )
-      if (newRows.length > 0) {
-        const u = mapUser(newRows[0])
-        await createSession(u.id)
-        return u
-      }
+    await pool.execute(
+      `INSERT INTO users (id, display_name, handle, avatar_url, avatar_blurhash, is_developer)
+       VALUES (1, '@dev', 'dev', '/images/avatar.png', 'L~N+^As.V?j[~VayaefQIqWCozaz', 1)
+       ON DUPLICATE KEY UPDATE display_name = '@dev', handle = 'dev', is_developer = 1`
+    )
+    const [newRows] = await pool.execute<RowDataPacket[]>(
+      `SELECT id, display_name, handle, avatar_url, avatar_blurhash, is_developer
+       FROM users WHERE LOWER(handle) = 'dev' LIMIT 1`
+    )
+    if (newRows.length > 0) {
+      const u = mapUser(newRows[0])
+      await createSession(u.id)
+      return u
     }
-    throw new Error(`Developer account @${cleanHandle} not found`)
+    throw new Error("Developer account @dev not found")
   }
 
   const user = mapUser(rows[0])
