@@ -5,12 +5,14 @@ import { encode } from "blurhash"
 import type { RowDataPacket } from "mysql2"
 import sharp from "sharp"
 import { encodeGeohash } from "../lib/geohash"
+import { downloadAndProcessImage, searchPlaceImages } from "../lib/image-search"
 import { createPool } from "./index"
 import {
   RAW_PLACES,
   SEED_CATEGORIES,
   SEED_CITIES,
   SEED_COUNTRIES,
+  SEED_USERS,
   type RawPlaceInput,
   type SeedPhoto,
 } from "./seed-data"
@@ -129,7 +131,7 @@ async function main() {
       if (!description) description = await rl.question("Short description: ")
       if (!imagesArg) {
         imagesArg = await rl.question(
-          "Image file path(s) comma-separated (or press enter if already in public/images/places/<slug>/): "
+          "Image file path(s) comma-separated (press enter to auto-fetch online): "
         )
       }
     } finally {
@@ -193,6 +195,28 @@ async function main() {
     photos.push({ ...photo, sortOrder: idx })
   }
 
+  if (photos.length === 0) {
+    console.log(`Searching online images for "${name} ${city}"...`)
+    const candidates = await searchPlaceImages(`${name} ${city}`, 3)
+    for (let idx = 0; idx < candidates.length; idx++) {
+      const candidate = candidates[idx]
+      const targetName = `photo-${idx + 1}.jpg`
+      const photo = await downloadAndProcessImage(
+        candidate.url,
+        placeDir,
+        targetName
+      )
+      if (photo) {
+        photos.push({ ...photo, sortOrder: photos.length })
+      }
+    }
+    if (photos.length > 0) {
+      console.log(
+        `✓ Automatically fetched ${photos.length} image(s) for "${name}"`
+      )
+    }
+  }
+
   const newPlace: RawPlaceInput = {
     city,
     country,
@@ -244,13 +268,9 @@ export interface RawPlaceInput {
   photos: SeedPhoto[]
 }
 
-export const SEED_USER = {
-  id: 1,
-  displayName: "@dev",
-  handle: "dev",
-  avatarUrl: "/images/avatar.png",
-  avatarBlurhash: "L~N+^As.V?j[~VayaefQIqWCozaz",
-}
+export const SEED_USERS = ${JSON.stringify(SEED_USERS, null, 2)}
+
+export const SEED_USER = SEED_USERS[0]
 
 export const SEED_COUNTRIES = ${JSON.stringify(seedCountries, null, 2)}
 

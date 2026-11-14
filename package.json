@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test lib/ads/ads.test.ts",
     "db:setup": "tsx db/setup.ts",
-    "location:add": "tsx db/add-location.ts"
+    "location:add": "tsx db/add-location.ts",
+    "images:fetch": "tsx db/fetch-place-images.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
