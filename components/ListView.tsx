@@ -194,7 +194,7 @@ export function ListView({
             render={<Link href="/" prefetch={true} />}
           >
             <ArrowLeft className="size-4" />
-            <span>Location of the Day</span>
+            <span>Home</span>
           </Button>
         </div>
       </header>
