@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "motion/react"
 import {
   Compass,
   Crosshair,
+  Home,
   ListCheck,
   Loader2,
   MapPin,
@@ -111,11 +113,26 @@ export function FloatingDock({
   onSearchOpenChange,
   onCheckIn,
 }: FloatingDockProps) {
+  const pathname = usePathname()
   const [expanded, setExpanded] = useState(false)
   const [hasToggled, setHasToggled] = useState(false)
   const [hoveredNav, setHoveredNav] = useState<"list" | "explore" | null>(null)
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dockRef = useRef<HTMLDivElement>(null)
+
+  const isListPage = pathname === "/list" || pathname?.startsWith("/list/")
+  const isExplorePage =
+    pathname === "/explore" || pathname?.startsWith("/explore/")
+
+  const isLeftHome = isListPage
+  const leftHref = isLeftHome ? "/" : user ? "/list" : "/signin"
+  const leftLabel = isLeftHome ? "Home" : "List"
+  const leftAriaLabel = isLeftHome ? "Home" : "Personal catalogue"
+
+  const isRightHome = isExplorePage
+  const rightHref = isRightHome ? "/" : "/explore"
+  const rightLabel = isRightHome ? "Home" : "Explore"
+  const rightAriaLabel = isRightHome ? "Home" : "Explore places"
 
   const handleNavMouseEnter = (nav: "list" | "explore") => {
     if (hoverTimerRef.current) {
@@ -141,12 +158,16 @@ export function FloatingDock({
   }
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setHoveredNav(null)
+    }, 0)
     return () => {
+      clearTimeout(timer)
       if (hoverTimerRef.current) {
         clearTimeout(hoverTimerRef.current)
       }
     }
-  }, [])
+  }, [pathname])
 
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     () => inferDefaultCoordinates(places)
@@ -331,13 +352,44 @@ export function FloatingDock({
                   className="h-11 rounded-full px-3 transition-colors"
                   onFocus={() => handleNavMouseEnter("list")}
                   onBlur={handleNavMouseLeave}
-                  aria-label="Personal catalogue"
+                  onClick={handleNavMouseLeave}
+                  aria-label={leftAriaLabel}
                   nativeButton={false}
-                  render={
-                    <Link href={user ? "/list" : "/signin"} prefetch={true} />
-                  }
+                  render={<Link href={leftHref} prefetch={true} />}
                 >
-                  <ListCheck className="size-5 shrink-0" />
+                  <div className="relative size-5 shrink-0">
+                    <AnimatePresence initial={false}>
+                      {isLeftHome ? (
+                        <motion.div
+                          key="home"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            duration: DURATION_ENTER,
+                            ease: EASE_OUT,
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Home className="size-5" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="list"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            duration: DURATION_ENTER,
+                            ease: EASE_OUT,
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <ListCheck className="size-5" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <AnimatePresence>
                     {hoveredNav === "list" && (
                       <motion.span
@@ -358,7 +410,7 @@ export function FloatingDock({
                         }}
                         className="overflow-hidden text-xs font-medium whitespace-nowrap"
                       >
-                        List
+                        {leftLabel}
                       </motion.span>
                     )}
                   </AnimatePresence>
@@ -441,11 +493,44 @@ export function FloatingDock({
                   className="h-11 rounded-full px-3 transition-colors"
                   onFocus={() => handleNavMouseEnter("explore")}
                   onBlur={handleNavMouseLeave}
-                  aria-label="Explore places"
+                  onClick={handleNavMouseLeave}
+                  aria-label={rightAriaLabel}
                   nativeButton={false}
-                  render={<Link href="/explore" prefetch={true} />}
+                  render={<Link href={rightHref} prefetch={true} />}
                 >
-                  <Compass className="size-5 shrink-0" />
+                  <div className="relative size-5 shrink-0">
+                    <AnimatePresence initial={false}>
+                      {isRightHome ? (
+                        <motion.div
+                          key="home"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            duration: DURATION_ENTER,
+                            ease: EASE_OUT,
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Home className="size-5" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="explore"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            duration: DURATION_ENTER,
+                            ease: EASE_OUT,
+                          }}
+                          className="absolute inset-0 flex items-center justify-center"
+                        >
+                          <Compass className="size-5" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <AnimatePresence>
                     {hoveredNav === "explore" && (
                       <motion.span
@@ -466,7 +551,7 @@ export function FloatingDock({
                         }}
                         className="overflow-hidden text-xs font-medium whitespace-nowrap"
                       >
-                        Explore
+                        {rightLabel}
                       </motion.span>
                     )}
                   </AnimatePresence>
