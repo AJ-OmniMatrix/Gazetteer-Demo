@@ -24,13 +24,13 @@ export function TopLeftBrand({ visible }: TopLeftBrandProps) {
           }}
           transition={{ duration: DURATION_ENTER, ease: EASE_OUT }}
           style={{ viewTransitionName: "top-left-brand" }}
-          className="fixed top-[max(1rem,env(safe-area-inset-top))] left-[max(1.25rem,calc(env(safe-area-inset-left)+0.5rem))] z-40 flex h-10 items-center sm:h-12"
+          className="fixed top-[max(1rem,env(safe-area-inset-top))] left-[max(1.25rem,calc(env(safe-area-inset-left)+0.5rem))] z-40 flex h-11 items-center sm:h-12"
         >
           <Link
             href="/"
             prefetch={true}
             aria-label="Gazetteer Home"
-            className="font-heading text-xl font-medium tracking-tight text-foreground transition-opacity hover:opacity-80 active:scale-[0.98] sm:text-2xl"
+            className="font-heading text-2xl font-bold tracking-wide text-foreground transition-opacity hover:opacity-80 active:scale-[0.98] sm:text-3xl"
           >
             Gazetteer
           </Link>
