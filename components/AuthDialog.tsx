@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Code2, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { cn } from "cn"
 import {
   developerLoginAction,
   loginAction,
@@ -51,13 +52,14 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault()
-    if (!handle.trim()) {
+    const clean = handle.trim()
+    if (!clean) {
       toast.error("Please enter your username")
       return
     }
     try {
       setLoading(true)
-      const res = await loginAction(handle)
+      const res = await loginAction(clean)
       if (!res.ok || !res.user) {
         throw new Error(res.error ?? "Sign-in failed")
       }
@@ -66,7 +68,11 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
       setHandle("")
       onSuccess?.()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign-in failed")
+      const msg = err instanceof Error ? err.message : "Sign-in failed"
+      toast.error(msg)
+      if (msg.toLowerCase().includes("please sign up")) {
+        setTab("signup")
+      }
     } finally {
       setLoading(false)
     }
@@ -74,13 +80,14 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault()
-    if (!handle.trim()) {
+    const clean = handle.trim()
+    if (!clean) {
       toast.error("Please choose a username")
       return
     }
     try {
       setLoading(true)
-      const res = await registerAction(handle, displayName)
+      const res = await registerAction(clean, displayName)
       if (!res.ok || !res.user) {
         throw new Error(res.error ?? "Sign-up failed")
       }
@@ -90,7 +97,11 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
       setDisplayName("")
       onSuccess?.()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Sign-up failed")
+      const msg = err instanceof Error ? err.message : "Sign-up failed"
+      toast.error(msg)
+      if (msg.toLowerCase().includes("please sign in")) {
+        setTab("signin")
+      }
     } finally {
       setLoading(false)
     }
@@ -136,25 +147,31 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-            <Button
+          <div className="grid grid-cols-2 gap-1 rounded-2xl bg-muted p-1">
+            <button
               type="button"
-              variant={tab === "signin" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 rounded-full text-xs font-medium shadow-none"
               onClick={() => setTab("signin")}
+              className={cn(
+                "flex h-8 items-center justify-center rounded-xl text-xs font-medium transition-all duration-150",
+                tab === "signin"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
               Sign In
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant={tab === "signup" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 rounded-full text-xs font-medium shadow-none"
               onClick={() => setTab("signup")}
+              className={cn(
+                "flex h-8 items-center justify-center rounded-xl text-xs font-medium transition-all duration-150",
+                tab === "signup"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
               Sign Up
-            </Button>
+            </button>
           </div>
 
           {tab === "signin" ? (
@@ -181,18 +198,29 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 
               <Button
                 type="submit"
-                className="mt-1 min-h-10 rounded-full font-medium"
-                disabled={loading || loadingDev !== null || !handle.trim()}
+                className="mt-1 h-10 w-full rounded-2xl font-medium"
+                disabled={loading || loadingDev !== null}
               >
                 {loading ? (
-                  <>
+                  <div className="flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin" />
                     <span>Signing in...</span>
-                  </>
+                  </div>
                 ) : (
                   <span>Sign In</span>
                 )}
               </Button>
+
+              <p className="pt-1 text-center text-xs text-muted-foreground">
+                Don&apos;t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setTab("signup")}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Sign Up
+                </button>
+              </p>
             </form>
           ) : (
             <form onSubmit={handleSignUp} className="flex flex-col gap-3">
@@ -235,18 +263,29 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 
               <Button
                 type="submit"
-                className="mt-1 min-h-10 rounded-full font-medium"
-                disabled={loading || loadingDev !== null || !handle.trim()}
+                className="mt-1 h-10 w-full rounded-2xl font-medium"
+                disabled={loading || loadingDev !== null}
               >
                 {loading ? (
-                  <>
+                  <div className="flex items-center gap-2">
                     <Loader2 className="size-4 animate-spin" />
                     <span>Creating account...</span>
-                  </>
+                  </div>
                 ) : (
                   <span>Sign Up</span>
                 )}
               </Button>
+
+              <p className="pt-1 text-center text-xs text-muted-foreground">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setTab("signin")}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Sign In
+                </button>
+              </p>
             </form>
           )}
         </div>

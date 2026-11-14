@@ -85,9 +85,10 @@ export function GazetteerShell({ initialData, children }: GazetteerShellProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider
-        onAuthSuccess={() =>
+        onAuthSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ["catalog"] })
-        }
+          queryClient.invalidateQueries({ queryKey: ["user-visits"] })
+        }}
       >
         <InnerShell initialData={initialData}>{children}</InnerShell>
       </AuthProvider>
