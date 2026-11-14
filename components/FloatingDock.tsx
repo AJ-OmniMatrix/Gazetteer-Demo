@@ -89,6 +89,24 @@ function inferDefaultCoordinates(places: PlaceSummary[]): {
   return { lat: 26.9124, lng: 75.7873 }
 }
 
+async function resolveCityName(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+    )
+    if (!res.ok) {
+      return null
+    }
+    const data = await res.json()
+    return data.city || data.locality || data.principalSubdivision || null
+  } catch {
+    return null
+  }
+}
+
 interface FloatingDockProps {
   places: PlaceSummary[]
   visitedSet: Set<number>
@@ -130,6 +148,15 @@ export function FloatingDock({
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     () => inferDefaultCoordinates(places)
   )
+  const [scannedCity, setScannedCity] = useState<string | null>(() => {
+    const defaultCoords = inferDefaultCoordinates(places)
+    const match = places.find(
+      (p) =>
+        Math.abs(p.lat - defaultCoords.lat) < 0.01 &&
+        Math.abs(p.lng - defaultCoords.lng) < 0.01
+    )
+    return match?.cityName ?? null
+  })
   const [locating, setLocating] = useState(false)
   const [geoError, setGeoError] = useState<string | null>(null)
 
@@ -180,10 +207,21 @@ export function FloatingDock({
     setLocating(true)
     setGeoError(null)
 
-    const onSuccess = (pos: GeolocationPosition) => {
-      setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+    const onSuccess = async (pos: GeolocationPosition) => {
+      const lat = pos.coords.latitude
+      const lng = pos.coords.longitude
+      setCoords({ lat, lng })
       setLocating(false)
       setGeoError(null)
+      const city = await resolveCityName(lat, lng)
+      if (city) {
+        setScannedCity(city)
+      } else {
+        const nearest = kdTree.nearest({ lat, lng }, 1)
+        if (nearest.length > 0) {
+          setScannedCity(nearest[0].item.cityName)
+        }
+      }
     }
 
     const onFallback = () => {
@@ -191,7 +229,14 @@ export function FloatingDock({
         onSuccess,
         () => {
           setLocating(false)
-          setCoords((prev) => prev ?? inferDefaultCoordinates(places))
+          setCoords((prev) => {
+            const next = prev ?? inferDefaultCoordinates(places)
+            const nearest = kdTree.nearest(next, 1)
+            if (nearest.length > 0) {
+              setScannedCity(nearest[0].item.cityName)
+            }
+            return next
+          })
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
       )
@@ -380,8 +425,8 @@ export function FloatingDock({
             <DrawerTitle className="font-heading text-2xl">
               Check In Nearby
             </DrawerTitle>
-            <DrawerDescription>
-              Uses your GPS coordinates to surface the closest catalogued spots.
+            <DrawerDescription className="sr-only">
+              Find places near your current location
             </DrawerDescription>
           </DrawerHeader>
           <div className="space-y-4 px-4 pb-4">
@@ -398,7 +443,7 @@ export function FloatingDock({
                 ) : (
                   <Crosshair />
                 )}
-                <span>{locating ? "Locating..." : "Use My GPS"}</span>
+                <span>{locating ? "Scanning..." : "Use My GPS"}</span>
               </Button>
               {cityPresets.map((preset) => {
                 const isSelected =
@@ -414,6 +459,7 @@ export function FloatingDock({
                     onClick={() => {
                       setGeoError(null)
                       setCoords({ lat: preset.lat, lng: preset.lng })
+                      setScannedCity(preset.label)
                     }}
                   >
                     {preset.label}
@@ -422,10 +468,27 @@ export function FloatingDock({
               })}
             </div>
 
-            {coords && (
-              <p className="font-mono text-xs text-muted-foreground tabular-nums">
-                {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
-              </p>
+            {locating && (
+              <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                <Loader2 className="size-3.5 animate-spin" />
+                <span>Scanning location...</span>
+              </div>
+            )}
+
+            {!locating && coords && (
+              <div className="flex items-center justify-between rounded-xl border bg-muted/40 px-3 py-2 text-xs">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <MapPin className="size-3.5 text-primary" />
+                  <span>
+                    {scannedCity ||
+                      nearestPlaces[0]?.item.cityName ||
+                      "Current Location"}
+                  </span>
+                </div>
+                <span className="font-mono text-muted-foreground tabular-nums">
+                  {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
+                </span>
+              </div>
             )}
 
             {geoError && (
