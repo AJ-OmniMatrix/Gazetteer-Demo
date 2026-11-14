@@ -44,10 +44,12 @@ export function ScrollReveal({
   const bandRef = useRef<HTMLDivElement>(null)
   const animRef = useRef<AnimationPlaybackControls | null>(null)
   const fallTimerRef = useRef<number | null>(null)
-  const targetRef = useRef(0)
   const fallingRef = useRef(false)
   const maxRevealRef = useRef(260)
   const touchYRef = useRef<number | null>(null)
+  const lastScrollDownTimeRef = useRef(0)
+  const lastResidualFlingTimeRef = useRef(0)
+  const lastScrollYRef = useRef(0)
   const [maxReveal, setMaxReveal] = useState(260)
   const [dockHidden, setDockHidden] = useState(false)
 
@@ -63,7 +65,6 @@ export function ScrollReveal({
   const triggerGravityFall = useCallback(() => {
     clearFallTimer()
     const current = offset.get()
-    targetRef.current = 0
     if (current <= 0) {
       fallingRef.current = false
       return
@@ -76,10 +77,10 @@ export function ScrollReveal({
       return
     }
     const max = Math.max(maxRevealRef.current, 1)
-    const duration = clamp(0.16 + (current / max) * 0.18, 0.16, 0.34)
+    const duration = clamp(0.12 + (current / max) * 0.12, 0.12, 0.2)
     animRef.current = animate(offset, 0, {
       duration,
-      ease: [0.55, 0, 1, 0.6],
+      ease: [0.25, 1, 0.5, 1],
       onComplete: () => {
         fallingRef.current = false
       },
@@ -95,6 +96,19 @@ export function ScrollReveal({
   )
 
   useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY || document.documentElement.scrollTop
+      const now = performance.now()
+      if (scrollY > lastScrollYRef.current + 1) {
+        lastScrollDownTimeRef.current = now
+      }
+      lastScrollYRef.current = scrollY
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  useEffect(() => {
     const el = bandRef.current
     if (!el) {
       return
@@ -103,11 +117,10 @@ export function ScrollReveal({
       const next = Math.max(el.offsetHeight, 96)
       maxRevealRef.current = next
       setMaxReveal(next)
-      if (offset.get() > next || targetRef.current > next) {
+      if (offset.get() > next) {
         animRef.current?.stop()
         fallingRef.current = false
-        targetRef.current = Math.min(targetRef.current, next)
-        offset.set(Math.min(offset.get(), next))
+        offset.set(next)
       }
     }
     updateHeight()
@@ -120,50 +133,73 @@ export function ScrollReveal({
     clearFallTimer()
     animRef.current?.stop()
     fallingRef.current = false
-    targetRef.current = 0
     offset.set(0)
   }, [fitViewport, disabled, clearFallTimer, offset])
 
   useEffect(() => {
     const applyWeightedDelta = (
       rawDelta: number,
-      isTouch: boolean
+      isTouch: boolean,
+      isMouseWheel: boolean
     ): boolean => {
       const max = maxRevealRef.current
       if (fallingRef.current) {
         fallingRef.current = false
-        targetRef.current = offset.get()
+        animRef.current?.stop()
       }
-      const current = isTouch ? offset.get() : targetRef.current
-      const atBottom =
-        fitViewport ||
-        window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 2
+      const current = offset.get()
 
-      if (current <= 0 && offset.get() <= 0 && (!atBottom || rawDelta <= 0)) {
+      const scrollY = window.scrollY || document.documentElement.scrollTop
+      const windowHeight = window.innerHeight
+      const docHeight = document.documentElement.scrollHeight
+      const atBottom = fitViewport || windowHeight + scrollY >= docHeight - 3
+
+      if (current <= 0) {
+        if (!atBottom || rawDelta <= 0) {
+          return false
+        }
+        if (!fitViewport) {
+          const now = performance.now()
+          if (
+            now - lastScrollDownTimeRef.current < 450 ||
+            now - lastResidualFlingTimeRef.current < 250
+          ) {
+            lastResidualFlingTimeRef.current = now
+            return false
+          }
+        }
+      }
+
+      if (rawDelta <= 0 && current <= 0) {
         return false
       }
 
       clearFallTimer()
       animRef.current?.stop()
 
-      const scale = isTouch ? 0.55 : 0.35
-      const next = clamp(current + rawDelta * scale, 0, max)
-      targetRef.current = next
-
-      if (isTouch || reducedMotion) {
+      if (rawDelta < 0) {
+        const next = clamp(current + rawDelta * (isTouch ? 0.6 : 0.4), 0, max)
         offset.set(next)
-      } else {
-        animRef.current = animate(offset, next, {
-          type: "spring",
-          mass: 1,
-          stiffness: 360,
-          damping: 36,
-        })
+        if (next === 0) {
+          return true
+        }
+        if (!isTouch) {
+          scheduleGravityFall(isMouseWheel ? 110 : 75)
+        }
+        return true
       }
 
-      if (!isTouch && next > 0) {
-        scheduleGravityFall(160)
+      const stepDelta = isTouch
+        ? Math.min(rawDelta, 28) * 0.2
+        : isMouseWheel
+          ? 10
+          : Math.min(rawDelta, 22) * 0.095
+
+      const next = clamp(current + stepDelta, 0, max)
+      offset.set(next)
+
+      if (next > 0 && !isTouch) {
+        scheduleGravityFall(isMouseWheel ? 110 : 75)
       }
       return true
     }
@@ -176,17 +212,18 @@ export function ScrollReveal({
       ) {
         return
       }
-      const scale =
-        event.deltaMode === 1
-          ? 16
-          : event.deltaMode === 2
-            ? window.innerHeight
-            : 1
+      const isLineMode = event.deltaMode === 1
+      const isMouseWheel = isLineMode || Math.abs(event.deltaY) >= 80
+      const scale = isLineMode
+        ? 16
+        : event.deltaMode === 2
+          ? window.innerHeight
+          : 1
       const dy = event.deltaY * scale
       if (dy === 0) {
         return
       }
-      if (applyWeightedDelta(dy, false)) {
+      if (applyWeightedDelta(dy, false, isMouseWheel)) {
         event.preventDefault()
       }
     }
@@ -203,7 +240,6 @@ export function ScrollReveal({
       clearFallTimer()
       animRef.current?.stop()
       fallingRef.current = false
-      targetRef.current = offset.get()
       touchYRef.current = event.touches[0].clientY
     }
 
@@ -222,7 +258,7 @@ export function ScrollReveal({
       if (dy === 0) {
         return
       }
-      if (applyWeightedDelta(dy, true)) {
+      if (applyWeightedDelta(dy, true, false)) {
         event.preventDefault()
       }
     }
