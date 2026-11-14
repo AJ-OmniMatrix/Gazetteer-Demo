@@ -11,16 +11,26 @@ import {
   ListCheck,
   Lock,
   MapPin,
+  Search,
+  SlidersHorizontal,
   Trash2,
+  X,
   Zap,
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import { BlurHashImage } from "@/components/BlurHashImage"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getUserVisitsAction } from "@/app/actions"
 import { useCatalog } from "@/hooks/use-catalog"
+import { PrefixTrie } from "@/lib/ads/trie"
 import { SegmentTree } from "@/lib/ads/segment-tree"
 import {
   DURATION_ENTER,
@@ -47,6 +57,7 @@ export function ListView({
     staleTime: 30_000,
   })
 
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
@@ -111,7 +122,18 @@ export function ListView({
     return Array.from(map.entries())
   }, [visits])
 
+  const trie = useMemo(() => {
+    return new PrefixTrie(
+      visits,
+      (v) =>
+        `${v.place.name} ${v.place.cityName} ${v.place.countryName} ${v.place.categoryLabel}`
+    )
+  }, [visits])
+
   const filteredVisits = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    const prefixMatches = q ? new Set(trie.search(q, 100)) : null
+
     return visits.filter((v) => {
       if (selectedCity !== "all" && v.place.cityName !== selectedCity) {
         return false
@@ -122,9 +144,34 @@ export function ListView({
       ) {
         return false
       }
+      if (q) {
+        if (prefixMatches?.has(v)) {
+          return true
+        }
+        const target =
+          `${v.place.name} ${v.place.cityName} ${v.place.countryName} ${v.place.categoryLabel} ${v.place.description}`.toLowerCase()
+        return target.includes(q)
+      }
       return true
     })
-  }, [visits, selectedCity, selectedCategory])
+  }, [visits, selectedCity, selectedCategory, searchQuery, trie])
+
+  const activeFilterCount =
+    (selectedCity !== "all" ? 1 : 0) + (selectedCategory !== "all" ? 1 : 0)
+
+  const resetFilters = () => {
+    setSelectedCity("all")
+    setSelectedCategory("all")
+  }
+
+  const resetAll = () => {
+    setSearchQuery("")
+    resetFilters()
+  }
+
+  const selectedCategoryLabel =
+    availableCategories.find(([slug]) => slug === selectedCategory)?.[1]
+      ?.label || selectedCategory
 
   if (!user) {
     return (
@@ -223,56 +270,220 @@ export function ListView({
       </div>
 
       {visits.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-3xl border bg-card/60 p-3.5 sm:p-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-xs font-medium text-muted-foreground">
-              City:
-            </span>
-            <Button
-              variant={selectedCity === "all" ? "default" : "outline"}
-              size="sm"
-              className="h-7 rounded-full px-3 text-xs font-normal"
-              onClick={() => setSelectedCity("all")}
-            >
-              All ({visits.length})
-            </Button>
-            {availableCities.map(([cityName, count]) => (
-              <Button
-                key={cityName}
-                variant={selectedCity === cityName ? "default" : "outline"}
-                size="sm"
-                className="h-7 rounded-full px-3 text-xs font-normal"
-                onClick={() => setSelectedCity(cityName)}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search visited places, cities, categories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 w-full rounded-2xl border bg-card pr-9 pl-10 shadow-2xs placeholder:text-muted-foreground/70"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+            </div>
+
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant={activeFilterCount > 0 ? "secondary" : "outline"}
+                    className="h-10 shrink-0 gap-2 rounded-2xl px-3.5 shadow-2xs"
+                    aria-label="Open filter options"
+                  />
+                }
               >
-                {cityName} ({count})
-              </Button>
-            ))}
+                <SlidersHorizontal className="size-4 text-muted-foreground" />
+                <span className="hidden text-xs font-medium sm:inline">
+                  Filter
+                </span>
+                {activeFilterCount > 0 && (
+                  <Badge
+                    variant="default"
+                    className="flex size-5 items-center justify-center rounded-full p-0 font-mono text-[10px]"
+                  >
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                sideOffset={8}
+                className="w-80 space-y-4 rounded-3xl p-4 sm:w-96"
+              >
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="font-heading text-sm font-medium">
+                    Filters
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                      onClick={resetFilters}
+                    >
+                      Reset all
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xs text-muted-foreground uppercase">
+                      City
+                    </span>
+                    {selectedCity !== "all" && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCity("all")}
+                        className="text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto pr-1">
+                    <Button
+                      variant={selectedCity === "all" ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 rounded-full px-2.5 text-xs font-normal"
+                      onClick={() => setSelectedCity("all")}
+                    >
+                      All ({visits.length})
+                    </Button>
+                    {availableCities.map(([cityName, count]) => (
+                      <Button
+                        key={cityName}
+                        variant={
+                          selectedCity === cityName ? "default" : "outline"
+                        }
+                        size="sm"
+                        className="h-7 rounded-full px-2.5 text-xs font-normal"
+                        onClick={() => setSelectedCity(cityName)}
+                      >
+                        {cityName} ({count})
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {availableCategories.length > 0 && (
+                  <div className="space-y-2 border-t pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs text-muted-foreground uppercase">
+                        Category
+                      </span>
+                      {selectedCategory !== "all" && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCategory("all")}
+                          className="text-[11px] text-muted-foreground hover:text-foreground"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto pr-1">
+                      <Button
+                        variant={
+                          selectedCategory === "all" ? "default" : "outline"
+                        }
+                        size="sm"
+                        className="h-7 rounded-full px-2.5 text-xs font-normal"
+                        onClick={() => setSelectedCategory("all")}
+                      >
+                        All Categories
+                      </Button>
+                      {availableCategories.map(([slug, cat]) => (
+                        <Button
+                          key={slug}
+                          variant={
+                            selectedCategory === slug ? "default" : "outline"
+                          }
+                          size="sm"
+                          className="h-7 rounded-full px-2.5 text-xs font-normal"
+                          onClick={() => setSelectedCategory(slug)}
+                        >
+                          {cat.label} ({cat.count})
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
 
-          {availableCategories.length > 1 && (
-            <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-2.5">
-              <span className="mr-1 text-xs font-medium text-muted-foreground">
-                Category:
-              </span>
-              <Button
-                variant={selectedCategory === "all" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-6 rounded-full px-2.5 text-[11px]"
-                onClick={() => setSelectedCategory("all")}
-              >
-                All
-              </Button>
-              {availableCategories.map(([slug, cat]) => (
-                <Button
-                  key={slug}
-                  variant={selectedCategory === slug ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-6 rounded-full px-2.5 text-[11px]"
-                  onClick={() => setSelectedCategory(slug)}
+          {(selectedCity !== "all" ||
+            selectedCategory !== "all" ||
+            searchQuery) && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {selectedCity !== "all" && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full py-0.5 pr-1.5 pl-2.5 text-xs"
                 >
-                  {cat.label} ({cat.count})
-                </Button>
-              ))}
+                  <span>City: {selectedCity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCity("all")}
+                    className="hover:text-foreground"
+                    aria-label="Remove city filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              {selectedCategory !== "all" && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full py-0.5 pr-1.5 pl-2.5 text-xs"
+                >
+                  <span>Category: {selectedCategoryLabel}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory("all")}
+                    className="hover:text-foreground"
+                    aria-label="Remove category filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              {searchQuery && (
+                <Badge
+                  variant="secondary"
+                  className="gap-1 rounded-full py-0.5 pr-1.5 pl-2.5 text-xs"
+                >
+                  <span>&ldquo;{searchQuery}&rdquo;</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="hover:text-foreground"
+                    aria-label="Remove search filter"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={resetAll}
+              >
+                Clear all
+              </Button>
             </div>
           )}
         </div>
@@ -316,8 +527,26 @@ export function ListView({
           </div>
         </div>
       ) : filteredVisits.length === 0 ? (
-        <div className="rounded-3xl border border-dashed py-12 text-center text-sm text-muted-foreground">
-          No visited places match the selected filters.
+        <div className="rounded-3xl border border-dashed bg-card/40 py-12 text-center">
+          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Search className="size-5" />
+          </div>
+          <h2 className="font-heading text-xl font-medium tracking-tight">
+            No Visited Places Found
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            No logged visits match your current search or filter criteria.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full px-4"
+              onClick={resetAll}
+            >
+              Clear search and filters
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
